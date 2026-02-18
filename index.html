@@ -1,0 +1,5795 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Лабиринт - Telegram версия</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+        * {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0a0a14;
+            font-family: 'Courier New', monospace;
+            color: #e6e6e6;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+        }
+        
+        #gameContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            -webkit-transform: translateZ(0);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        .top-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to bottom, rgba(10, 10, 20, 0.9), rgba(26, 26, 42, 0.7));
+            border-bottom: 1px solid #3a3a5a;
+            padding: 10px 15px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+        }
+		
+		.damage-info {
+    font-size: 14px;
+    color: #ff8a8a;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 100, 100, 0.5);
+    padding: 0 10px;
+    background: rgba(60, 20, 20, 0.3);
+    border-radius: 8px;
+    border: 1px solid #8a4a4a;
+    min-width: 70px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.damage-info.crit-high {
+    color: #ffff00;
+    background: rgba(80, 60, 0, 0.3);
+    border-color: #ffaa00;
+    text-shadow: 0 0 8px rgba(255, 200, 0, 0.7);
+}
+
+.damage-info.low-damage {
+    color: #ffaaaa;
+    background: rgba(40, 40, 40, 0.3);
+    border-color: #666666;
+}
+
+@keyframes damageChange {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.damage-updated {
+    animation: damageChange 0.3s;
+}
+        
+        .level-info {
+            font-size: 16px;
+            font-weight: bold;
+            color: #8a8aff;
+        }
+        
+        .steps-info {
+            font-size: 14px;
+            color: #a0a0d0;
+        }
+        
+        .exit-info {
+            font-size: 14px;
+            color: #ff6464;
+            font-weight: bold;
+        }
+        
+        .menu-btn {
+        position: absolute;
+        top: 70px;
+        right: 15px;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+        border: 2px solid #4a4a5a;
+        border-radius: 50%;
+        color: #b0b0ff;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 101;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+        
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .menu-content {
+            background: linear-gradient(to bottom, #1a1a2a, #0a0a14);
+            border: 2px solid #4a4a5a;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 90%;
+            max-height: 85%;
+            overflow-y: auto;
+            width: 350px;
+        }
+        
+        .menu-title {
+            color: #8a8aff;
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 20px;
+            text-shadow: 0 0 10px rgba(138, 138, 255, 0.5);
+        }
+        
+        .menu-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .menu-btn-item {
+            padding: 16px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 1px solid #4a4a5a;
+            color: #b0b0ff;
+            font-family: 'Courier New', monospace;
+            font-size: 17px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .menu-btn-item:active {
+            background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+            transform: scale(0.98);
+        }
+        
+        .arrow-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 50;
+            padding: 20px;
+        }
+        
+        .arrow-btn {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a7a;
+            border-radius: 50%;
+            color: #b0b0ff;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            user-select: none;
+        }
+        
+        .arrow-btn:active {
+            background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+            border-color: #5a5a9a;
+            transform: scale(0.95);
+        }
+        
+        .stairs-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 51;
+        }
+        
+        .stairs-btn {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a7a;
+            border-radius: 50%;
+            color: #b0b0ff;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stairs-btn:active {
+            background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+            border-color: #5a5a9a;
+            transform: scale(0.95);
+        }
+        
+        #stairsUp {
+            color: #64ff64;
+        }
+        
+        #stairsDown {
+            color: #ff6464;
+        }
+        
+        .hud-panel {
+            position: absolute;
+            bottom: 120px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 90;
+        }
+        
+        .health-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(40, 20, 20, 0.8);
+            border: 2px solid #5a3a3a;
+            border-radius: 10px;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(to right, #44ff44, #88ff88);
+            border-radius: 8px;
+            transition: width 0.3s;
+            position: relative;
+        }
+        
+        .health-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            line-height: 20px;
+        }
+        
+        .inventory {
+            display: flex;
+            gap: 8px;
+            background: rgba(20, 20, 40, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #4a4a5a;
+            backdrop-filter: blur(5px);
+        }
+        
+        .inventory-slot {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(to bottom, #3a3a5a, #2a2a4a);
+            border: 2px solid #5a5a7a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            position: relative;
+        }
+        
+        .inventory-slot.active {
+            border-color: #8a8aff;
+            box-shadow: 0 0 10px rgba(138, 138, 255, 0.5);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a5a;
+            border-radius: 12px;
+            padding: 25px;
+            color: #fff;
+            text-align: center;
+            z-index: 300;
+            display: none;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+            max-width: 85%;
+            backdrop-filter: blur(10px);
+        }
+        
+        .damage-popup {
+            position: absolute;
+            color: #ff4444;
+            font-weight: bold;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 100;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+        
+        .hit-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.3);
+            pointer-events: none;
+            z-index: 400;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .compass-hud {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #4a4a5a;
+            backdrop-filter: blur(5px);
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 95;
+            max-width: 200px;
+        }
+        
+        .compass-target {
+            font-size: 12px;
+            padding: 6px 10px;
+            background: rgba(40, 40, 60, 0.7);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .compass-target:hover {
+            background: rgba(60, 60, 80, 0.9);
+        }
+        
+        .compass-target.active {
+            background: rgba(80, 80, 120, 0.9);
+            border-color: #8a8aff;
+        }
+        
+        .compass-direction {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #64ff64;
+        }
+        
+        .compass-arrow {
+            font-size: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .mini-map {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #4a4a5a;
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 95;
+    		transition: all 0.3s ease;
+        }
+        
+        .map-grid {
+            display: grid;
+            gap: 1px;
+        }
+        
+        .map-cell {
+            width: 8px;
+            height: 8px;
+            border-radius: 1px;
+        }
+        
+        .auto-attack-toggle {
+            position: absolute;
+            bottom: 180px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a7a;
+            border-radius: 50%;
+            color: #ff6464;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            z-index: 52;
+            user-select: none;
+        }
+        
+        .auto-attack-toggle.active {
+            background: linear-gradient(to bottom, #4a2a2a, #3a1a1a);
+            border-color: #ff6464;
+            color: #ffaaaa;
+            box-shadow: 0 0 15px rgba(255, 100, 100, 0.5);
+        }
+		
+		.critical-hit {
+            animation: criticalFlash 0.3s;
+            color: #ff4444 !important;
+            text-shadow: 0 0 10px #ffaa00;
+        }
+
+        @keyframes criticalFlash {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .collapse-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(40, 40, 60, 0.8);
+            border: 1px solid #5a5a7a;
+            border-radius: 4px;
+            color: #b0b0ff;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1;
+            user-select: none;
+        }
+
+        .collapse-btn:hover {
+            background: rgba(60, 60, 80, 0.9);
+        }
+
+        .collapsed {
+            width: auto !important;
+            height: 30px !important;
+            overflow: hidden;
+            padding: 5px !important;
+        }
+
+        .collapsed .collapse-btn {
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .collapsed .map-grid,
+        .collapsed .compass-target:not(:first-child),
+        .collapsed .compass-direction {
+            display: none !important;
+        }
+
+        .mini-map.collapsed {
+            padding: 5px 10px;
+            min-width: 100px;
+            cursor: pointer;
+        }
+
+        .mini-map.collapsed:hover {
+            background: rgba(30, 30, 50, 0.9);
+        }
+
+        .mini-map.collapsed::after {
+            content: "🗺️ Мини-карта";
+            color: #8a8aff;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mini-map.collapsed::before {
+            content: "🗺️";
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .compass-hud.collapsed {
+            min-width: 100px;
+        }
+
+        .compass-hud.collapsed::before {
+            content: "🧭";
+            font-size: 16px;
+            margin-right: 8px;
+        }
+        
+        .keyboard-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.8);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid #4a4a5a;
+            color: #8a8aff;
+            font-size: 12px;
+            text-align: center;
+            z-index: 49;
+            backdrop-filter: blur(5px);
+            display: none;
+        }
+        
+    @media (max-width: 480px) {
+		.arrow-controls {
+        	bottom: 10px;
+        	gap: 10px;
+        	padding: 10px;
+    	}
+		.damage-info {
+        font-size: 12px;
+        min-width: 60px;
+        padding: 0 5px;
+    }    
+    .top-panel {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 50px;
+        padding: 5px 10px;
+    }
+    
+    .top-panel > div {
+        margin: 2px;
+    }
+    
+    .notification {
+        width: 90% !important;
+        max-width: 350px !important;
+        max-height: 70vh !important;
+        padding: 20px 15px !important;
+        overflow-y: auto !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    #notificationText {
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        padding-right: 5px !important;
+    }
+    
+    #notificationText div {
+        font-size: 13px !important;
+    }
+    
+    .notification button {
+        position: relative !important;
+        margin-top: 15px !important;
+        width: 100% !important;
+        padding: 12px !important;
+        font-size: 16px !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+    }
+    
+    .notification::after {
+        content: '';
+        display: block;
+        height: 1px;
+        margin: 10px 0;
+    }
+    
+    	.arrow-btn {
+        	width: 50px;
+        	height: 50px;
+        	font-size: 24px;
+    	}
+		
+		.stairs-controls {
+        	bottom: 10px;
+        	right: 10px;
+    	}
+    
+    	.stairs-btn {
+        	width: 45px;
+        	height: 45px;
+        	font-size: 22px;
+    	}
+		
+        .menu-btn {
+            top: 50px;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+        }
+        
+        .shop-btn {
+            position: absolute;
+    		top: 70px;
+    		left: 20px;
+    		width: 50px;
+    		height: 50px;
+            font-size: 20px;
+        }
+        
+        .auto-attack-toggle {
+            bottom: 200px;
+            right: 15px;
+            width: 45px;
+            height: 45px;
+            font-size: 18px;
+        }
+        
+        .hud-panel {
+            bottom: 100px;
+            left: 10px;
+        }
+        
+        .compass-hud {
+            top: 100px;
+            left: 10px;
+            max-width: 160px;
+        }
+        
+        .mini-map {
+            top: 100px;
+            right: 10px;
+        }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) {
+        .menu-btn {
+            top: 55px;
+        }
+		
+		.notification {
+        width: 85% !important;
+        max-width: 400px !important;
+        max-height: 75vh !important;
+        padding: 25px 20px !important;
+    }
+    .damage-info {
+        font-size: 13px;
+        min-width: 80px;
+    }
+    #notificationText {
+        max-height: 55vh !important;
+        font-size: 15px !important;
+    }
+		
+		.arrow-controls {
+        	bottom: 10px;
+        	gap: 10px;
+        	padding: 10px;
+    	}
+    
+    	.arrow-btn {
+        	width: 50px;
+        	height: 50px;
+        	font-size: 24px;
+    	}
+		
+		.stairs-controls {
+        	bottom: 10px;
+        	right: 10px;
+    	}
+    
+    	.stairs-btn {
+        	width: 45px;
+        	height: 45px;
+        	font-size: 22px;
+    	}
+        
+        .shop-btn {
+            bottom: 220px;
+        }
+        
+        .auto-attack-toggle {
+            bottom: 220px;
+        }
+    }
+	
+    .torch-beam {
+        position: absolute;
+        pointer-events: none;
+        z-index: 10;
+        mix-blend-mode: screen;
+    }
+
+    @keyframes arrowFly {
+        0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+        100% { transform: translate(var(--tx), var(--ty)) rotate(45deg); opacity: 0; }
+    }
+
+    .arrow-animation {
+        position: absolute;
+        font-size: 24px;
+        pointer-events: none;
+        z-index: 100;
+        animation: arrowFly 0.5s linear forwards;
+    }
+
+    .new-item {
+        border: 2px solid #ff8a00 !important;
+        background: linear-gradient(to bottom, #3a2a00, #2a1a00) !important;
+    }
+
+    .new-item:hover {
+        border-color: #ffaa44 !important;
+        box-shadow: 0 0 20px rgba(255, 170, 68, 0.5) !important;
+    }
+			
+	.shop-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.9);
+        z-index: 500;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .shop-content {
+        background: linear-gradient(to bottom, #1a1a2a, #0a0a14);
+        border: 2px solid #8a8aff;
+        border-radius: 15px;
+        padding: 25px;
+        max-width: 90%;
+        max-height: 85%;
+        overflow-y: auto;
+        width: 450px;
+        box-shadow: 0 0 40px rgba(138, 138, 255, 0.3);
+    }
+
+    .shop-title {
+        color: #ffd700;
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 22px;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .gold-display {
+        background: linear-gradient(to right, #4a3a00, #2a2a00);
+        border: 2px solid #ffd700;
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: #ffd700;
+        margin-bottom: 20px;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .shop-items {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .shop-item {
+        background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+        border: 2px solid #4a4a7a;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 120px;
+    }
+
+    .shop-item:hover {
+        border-color: #8a8aff;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .shop-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: #5a5a5a;
+    }
+
+    .shop-item.disabled:hover {
+        transform: none;
+        border-color: #5a5a5a;
+        box-shadow: none;
+    }
+
+    .shop-item-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .shop-item-name {
+        font-size: 14px;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 5px;
+    }
+
+    .shop-item-effect {
+        font-size: 12px;
+        color: #a0a0d0;
+        margin-bottom: 10px;
+        flex-grow: 1;
+    }
+
+    .shop-item-price {
+        background: rgba(255, 215, 0, 0.2);
+        border: 1px solid #ffd700;
+        border-radius: 15px;
+        padding: 5px 10px;
+        font-size: 14px;
+        font-weight: bold;
+        color: #ffd700;
+        margin-top: auto;
+    }
+
+    .shop-item-price.disabled {
+        background: rgba(255, 0, 0, 0.2);
+        border-color: #ff6464;
+        color: #ff6464;
+    }
+
+    .shop-controls {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+    }
+
+    .shop-control-btn {
+        flex: 1;
+        padding: 15px;
+        background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+        border: 2px solid #4a4a7a;
+        border-radius: 10px;
+        color: #b0b0ff;
+        font-family: 'Courier New', monospace;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .shop-control-btn:hover {
+        background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+        border-color: #8a8aff;
+    }
+
+    .shop-btn {
+        position: absolute;
+    	top: 70px;
+    	left: 20px;
+    	width: 50px;
+    	height: 50px;
+    	background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+    	border: 2px solid #ffd700;
+    	border-radius: 50%;
+    	color: #ffd700;
+    	font-size: 24px;
+    	display: flex;
+    	align-items: center;
+    	justify-content: center;
+    	cursor: pointer;
+    	box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    	z-index: 101;
+    	user-select: none;
+    }
+
+    .shop-btn:hover {
+        background: linear-gradient(to bottom, #4a4a00, #3a3a00);
+        border-color: #ffff00;
+        color: #ffff00;
+    }
+
+    @keyframes purchaseSuccess {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    .purchase-success {
+        animation: purchaseSuccess 0.5s;
+    }
+
+    .shop-hint {
+        text-align: center;
+        font-size: 13px;
+        color: #8a8aff;
+        margin-top: 15px;
+        font-style: italic;
+    }
+        }
+		
+    .combat-lock {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 0, 0, 0.1);
+        z-index: 1000;
+        pointer-events: none;
+        display: none;
+    }
+
+    .combat-lock.active {
+        display: block;
+        animation: combatPulse 2s infinite;
+    }
+
+    @keyframes combatPulse {
+        0% { background: rgba(255, 0, 0, 0.1); }
+        50% { background: rgba(255, 0, 0, 0.2); }
+        100% { background: rgba(255, 0, 0, 0.1); }
+    }
+
+    .combat-indicator {
+    position: absolute;
+    bottom: 320px;
+    left: 0px;
+    background: rgba(255, 50, 50, 0.9);
+    border: 2px solid #ff6464;
+    border-radius: 10px;
+    padding: 8px 15px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 102;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 20px rgba(255, 100, 100, 0.5);
+}
+
+    .combat-indicator.active {
+        display: flex;
+        animation: pulse 1.5s infinite;
+    }
+
+    .escape-btn {
+        position: absolute;
+        bottom: 240px;
+        left: 85px;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(to bottom, #4a2a2a, #3a1a1a);
+        border: 2px solid #ff6464;
+        border-radius: 50%;
+        color: #ffaaaa;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(255, 100, 100, 0.3);
+        z-index: 52;
+        user-select: none;
+        display: none;
+    }
+
+    .escape-btn.active {
+        display: flex;
+        animation: escapePulse 2s infinite;
+    }
+	
+    .enemy-health-bar {
+        width: 150px !important;
+        height: 12px !important;
+        font-size: 10px !important;
+    }
+
+    @keyframes escapePulse {
+        0% { box-shadow: 0 0 15px rgba(255, 100, 100, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(255, 100, 100, 0.6); }
+        100% { box-shadow: 0 0 15px rgba(255, 100, 100, 0.3); }
+    }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+  <div class="hit-effect" id="hitEffect"></div>
+  <div class="top-panel">
+    <div class="level-info" id="levelIndicator">ЭТАЖ 1</div>
+    <div class="steps-info" id="stepsCounter">Шагов: 0</div>
+	<div class="damage-info" id="damageInfo">Урон: 3</div>
+    <div class="exit-info" id="exitInfo">Выход: этаж 1</div>
+  </div>
+  <div class="hud-panel">
+    <div class="health-bar">
+      <div class="health-fill" id="healthFill" style="width: 100%">
+        <div class="health-text" id="healthText">100/100</div>
+      </div>
+    </div>
+    <div class="inventory" id="inventory"></div>
+  </div>
+  
+  <div class="compass-hud" id="compassHud">
+    <div class="collapse-btn" id="compassCollapseBtn" onClick="toggleCompassCollapse()">−</div>
+    <div style="color:#8a8aff; font-size:14px; font-weight:bold; margin-bottom:5px;">КОМПАС</div>
+    <div class="compass-target" data-target="exit">🚩 Выход</div>
+    <div class="compass-target" data-target="map">🗺️ Карта</div>
+    <div class="compass-target" data-target="stairs">📶 Лестницы</div>
+    <div class="compass-target" data-target="weapon">⚔️ Оружие</div>
+    <div class="compass-target" data-target="potion">🧪 Зелья</div>
+    <div class="compass-target" data-target="treasure">💎 Сокровища</div>
+    <div class="compass-direction" id="compassDirection" style="display: none;"> <span class="compass-arrow" id="compassArrow">↑</span> <span id="compassDistance">0 шагов</span> </div>
+  </div>
+  
+  <div class="shop-btn" id="shopBtn" title="Магазин (B)">💰</div>
+  
+<div class="shop-overlay" id="shopOverlay">
+  <div class="shop-content">
+    <div class="shop-title">🏪 МАГАЗИН ПРЕДМЕТОВ</div>
+    
+    <div class="gold-display" id="shopGoldDisplay">
+      Ваше золото: <span id="currentGold">0</span> 🪙
+    </div>
+    
+    <div class="shop-items" id="shopItems"></div>
+    
+    <div class="shop-controls">
+      <div class="shop-control-btn" onClick="refreshShop()">🔄 Обновить ассортимент</div>
+      <div class="shop-control-btn" onClick="closeShop()">✕ Закрыть магазин</div>
+    </div>
+    
+    <div class="shop-hint">
+      💡 Совет: Золото можно найти в сундуках и получить за убийство врагов
+    </div>
+  </div>
+</div>
+  
+  <div class="mini-map" id="miniMap"></div>
+  
+  <div class="auto-attack-toggle" id="autoAttackToggle" title="Автоатака (A)">A</div>
+  <div class="menu-btn" onClick="toggleMenu()">☰</div>
+  <div class="arrow-controls">
+    <div class="arrow-btn" onClick="movePlayer(0, -1)">↑</div>
+    <div class="arrow-btn" onClick="movePlayer(-1, 0)">←</div>
+    <div class="arrow-btn" onClick="movePlayer(0, 1)">↓</div>
+    <div class="arrow-btn" onClick="movePlayer(1, 0)">→</div>
+  </div>
+  <div class="stairs-controls">
+    <div class="stairs-btn" id="stairsUp" onClick="useStairs(1)">↑</div>
+    <div class="stairs-btn" id="stairsDown" onClick="useStairs(-1)">↓</div>
+  </div>
+  <div class="keyboard-hint" id="keyboardHint">Управление: WASD/Стрелки, ПРОБЕЛ - атака, 1-4 оружие</div>
+</div>
+
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-content">
+    <div class="menu-title">ЛАБИРИНТ - УПРАВЛЕНИЕ</div>
+    <div class="menu-btn-group">
+      <div class="menu-btn-item" onClick="newGame()">🔄 Новая игра</div>
+      <div class="menu-btn-item" onClick="changeTheme()">🎨 Смена темы</div>
+      <div class="menu-btn-item" onClick="showStats()">📊 Статистика</div>
+      <div class="menu-btn-item" onClick="showInstructions()">❓ Как играть</div>
+      <div class="menu-btn-item" onClick="toggleMenu()">✕ Продолжить</div>
+    </div>
+  </div>
+</div>
+
+<div class="notification" id="notification">
+  <div id="notificationText"></div>
+  <button class="menu-btn-item" onClick="hideNotification()" style="margin-top: 20px;">OK</button>
+  
+  <div class="combat-indicator" id="combatIndicator">
+    <span>⚔️ АВТОБОЙ</span>
+    <span id="combatEnemyName"></span>
+  </div>
+  
+  <div class="combat-lock" id="combatLock"></div>
+  
+  <div class="escape-btn" id="escapeBtn" title="Сбежать (Shift)">🏃</div>
+</div>
+
+<script>
+// ===============================
+// Telegram Web App инициализация
+// ===============================
+const tg = window.Telegram.WebApp;
+tg.expand();
+tg.enableClosingConfirmation();
+tg.setHeaderColor('#0a0a14');
+tg.setBackgroundColor('#0a0a14');
+
+const user = tg.initDataUnsafe?.user;
+if (user) {
+    console.log('Игрок:', user.username || user.first_name);
+}
+
+// ===============================
+// Получение элементов DOM
+// ===============================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const levelIndicator = document.getElementById('levelIndicator');
+const stepsCounter = document.getElementById('stepsCounter');
+const exitInfo = document.getElementById('exitInfo');
+const menuOverlay = document.getElementById('menuOverlay');
+const notification = document.getElementById('notification');
+const notificationText = document.getElementById('notificationText');
+const healthFill = document.getElementById('healthFill');
+const healthText = document.getElementById('healthText');
+const inventory = document.getElementById('inventory');
+const hitEffect = document.getElementById('hitEffect');
+const compassHud = document.getElementById('compassHud');
+const compassDirection = document.getElementById('compassDirection');
+const compassArrow = document.getElementById('compassArrow');
+const compassDistance = document.getElementById('compassDistance');
+const miniMap = document.getElementById('miniMap');
+const autoAttackToggle = document.getElementById('autoAttackToggle');
+const keyboardHint = document.getElementById('keyboardHint');
+const shopBtn = document.getElementById('shopBtn');
+const shopOverlay = document.getElementById('shopOverlay');
+const shopItemsContainer = document.getElementById('shopItems');
+const currentGoldElement = document.getElementById('currentGold');
+
+// ===============================
+// ТЕМЫ ОФОРМЛЕНИЯ
+// ===============================
+const themes = {
+    dungeon: {
+        name: "Подземелье",
+        wallColor: "#8a7a6a",
+        floorColor: "#5a4a3a",
+        bgColor: "#1a0a0a",
+        wallShadow: "#6a5a4a",
+        floorPattern: "#4a3a2a",
+        lightColor: "rgba(200, 150, 100, 0.3)"
+    },
+    forest: {
+        name: "Лес",
+        wallColor: "#5a8a4a",
+        floorColor: "#3a6a2a",
+        bgColor: "#0a1a0a",
+        wallShadow: "#4a7a3a",
+        floorPattern: "#2a5a1a",
+        lightColor: "rgba(100, 200, 100, 0.3)"
+    },
+    castle: {
+        name: "Замок",
+        wallColor: "#a0a0b0",
+        floorColor: "#707080",
+        bgColor: "#2a2a3a",
+        wallShadow: "#808090",
+        floorPattern: "#606070",
+        lightColor: "rgba(180, 180, 220, 0.3)"
+    },
+    ice: {
+        name: "Ледяной",
+        wallColor: "#a0d0ff",
+        floorColor: "#80b0e0",
+        bgColor: "#1a3a5a",
+        wallShadow: "#90c0f0",
+        floorPattern: "#70a0d0",
+        lightColor: "rgba(180, 220, 255, 0.4)"
+    },
+    lava: {
+        name: "Вулкан",
+        wallColor: "#ff8a4a",
+        floorColor: "#cc6a2a",
+        bgColor: "#4a1a0a",
+        wallShadow: "#e07a3a",
+        floorPattern: "#aa5a1a",
+        lightColor: "rgba(255, 100, 50, 0.4)"
+    }
+};
+
+// ===============================
+// ОРУЖИЕ
+// ===============================
+const weapons = {
+    fist: { name: "Кулаки", damage: 3, symbol: "👊", color: "#aaa", rarity: 1, melee: true },
+    dagger: { name: "Кинжал", damage: 5, symbol: "🗡️", color: "#8a8aff", rarity: 2, melee: true },
+    sword: { name: "Меч", damage: 8, symbol: "⚔️", color: "#ff8a00", rarity: 3, melee: true },
+    axe: { name: "Топор", damage: 12, symbol: "🪓", color: "#ff4444", rarity: 4, melee: true },
+    bow: { name: "Лук", damage: 7, symbol: "🏹", color: "#8a6642", rarity: 3, melee: false, range: 5, ammo: 10 },
+    magicStaff: { name: "Посох", damage: 15, symbol: "🦯", color: "#aa44ff", rarity: 5, melee: true },
+    legendary: { name: "Легендарный", damage: 20, symbol: "🔫", color: "#ffdd00", rarity: 6, melee: true }
+};
+
+// ===============================
+// ПРЕДМЕТЫ
+// ===============================
+const items = {
+    healthPotion: { 
+        name: "Зелье здоровья", 
+        type: "heal", 
+        value: 30, 
+        symbol: "🧪", 
+        color: "#ff4444",
+        effect: "Восстанавливает здоровье"
+    },
+    strengthPotion: { 
+        name: "Зелье силы", 
+        type: "buff", 
+        value: 5, 
+        symbol: "💪", 
+        color: "#ff8a00",
+        effect: "+5 к урону на 10 шагов"
+    },
+    shield: { 
+        name: "Щит", 
+        type: "defense", 
+        value: 3, 
+        symbol: "🛡️", 
+        color: "#4488ff",
+        effect: "+3 к защите"
+    },
+    speedBoots: { 
+        name: "Сапоги скорости", 
+        type: "speed", 
+        value: 2, 
+        symbol: "👟", 
+        color: "#44ff44",
+        effect: "Увеличивает дальность обзора"
+    },
+    treasure: { 
+        name: "Сокровище", 
+        type: "treasure", 
+        value: 100, 
+        symbol: "💎", 
+        color: "#ffdd00",
+        effect: "Ценный предмет"
+    },
+    map: { 
+        name: "Карта уровня", 
+        type: "map", 
+        value: 1, 
+        symbol: "🗺️", 
+        color: "#8a8aff",
+        effect: "Открывает всю карту текущего этажа"
+    },
+    schematic: { 
+        name: "Схема лабиринта", 
+        type: "schematic", 
+        value: 1, 
+        symbol: "📋", 
+        color: "#44ff44",
+        effect: "Открывает мини-карту"
+    },
+    compass: { 
+        name: "Магический компас", 
+        type: "compass", 
+        value: 1, 
+        symbol: "🧭", 
+        color: "#ffdd00",
+        effect: "Показывает направление к цели"
+    },
+    goldCoin: {
+        name: "Золотая монета",
+        type: "gold",
+        value: 10,
+        symbol: "🪙",
+        color: "#ffd700",
+        effect: "10 золотых монет"
+    },
+    goldPouch: {
+        name: "Кошель с золотом",
+        type: "gold",
+        value: 50,
+        symbol: "💰",
+        color: "#ffd700",
+        effect: "50 золотых монет"
+    },
+    treasureChest: {
+        name: "Сундук с сокровищами",
+        type: "gold",
+        value: 100,
+        symbol: "💎",
+        color: "#ffd700",
+        effect: "100 золотых монет"
+    },
+    torch: { 
+        name: "Магический факел", 
+        type: "torch", 
+        value: 10,
+        symbol: "🔥", 
+        color: "#ff8a00",
+        effect: "Освещает путь до препятствия, работает 10 раз"
+    },
+    arrows: { 
+        name: "Стрелы", 
+        type: "ammo", 
+        value: 5,
+        symbol: "➹", 
+        color: "#8a8aff",
+        effect: "5 стрел для лука"
+    },
+};
+
+// ===============================
+// ВРАГИ
+// ===============================
+const enemies = {
+    rat: {
+        name: "Крыса",
+        health: 15,
+        damage: 3,
+        symbol: "🐀",
+        color: "#8a6642",
+        xp: 10,
+        rarity: 1
+    },
+    goblin: {
+        name: "Гоблин",
+        health: 25,
+        damage: 5,
+        symbol: "👺",
+        color: "#44aa44",
+        xp: 20,
+        rarity: 2
+    },
+    zombie: {
+        name: "Зомби",
+        health: 35,
+        damage: 6,
+        symbol: "🧟‍♂️",
+        color: "#cccccc",
+        xp: 30,
+        rarity: 2
+    },
+    skeleton: {
+        name: "Скелет",
+        health: 40,
+        damage: 7,
+        symbol: "💀",
+        color: "#cccccc",
+        xp: 35,
+        rarity: 3
+    },
+    orc: {
+        name: "Орк",
+        health: 60,
+        damage: 10,
+        symbol: "🧌",
+        color: "#664444",
+        xp: 50,
+        rarity: 4
+    },
+    dragon: {
+        name: "Дракон",
+        health: 100,
+        damage: 15,
+        symbol: "🐉",
+        color: "#ff4444",
+        xp: 100,
+        rarity: 5
+    }
+};
+
+// ===============================
+// КОНФИГУРАЦИЯ
+// ===============================
+const config = {
+    levels: 9,
+    levelSize: 25,
+    cellSize: 40,
+    seed: Date.now(),
+    playerHealth: 100,
+    playerMaxHealth: 100,
+    playerDamage: 3,
+    playerDefense: 0,
+    playerLevel: 1,
+    playerXP: 0,
+    xpToNextLevel: 100,
+    cameraX: 0,
+    cameraY: 0,
+    currentTheme: 'dungeon',
+    fogDistance: 2,
+    showCompass: false,
+    showMap: false,
+    showSchematic: false,
+    autoAttack: true,
+    compassTarget: 'exit',
+    buffs: {
+        strength: { value: 0, duration: 0 },
+        defense: { value: 0, duration: 0 },
+        speed: { value: 0, duration: 0 }
+    },
+    xpMultiplier: 1.0,
+    healthRegenPerKill: 5,
+    damageBonusPerLevel: 0.5,
+    defenseBonusPerLevel: 0.3,
+    critChance: 0.1,
+    critMultiplier: 1.5,
+    comboBonus: 0,
+    comboTimeout: 3000,
+    lastKillTime: 0,
+    killStreak: 0,
+    killRewards: {
+        xpBonus: 1.2,
+        healthBonus: 2,
+        goldChance: 1.5
+    }
+};
+
+// ===============================
+// СОСТОЯНИЕ ИГРЫ
+// ===============================
+const game = {
+    player: { x: 1, y: 1, floor: 0 },
+    exit: { x: 0, y: 0, floor: 0 },
+    levels: [],
+    stairs: [],
+    teleports: [],
+    enemies: [],
+    items: [],
+    steps: 0,
+    foundExit: false,
+    inventory: [weapons.fist, null, null, null],
+    activeWeapon: 0,
+    selectedEnemy: null,
+    damageNumbers: [],
+    discoveredRooms: new Set(),
+    hasMap: false,
+    hasSchematic: false,
+    hasCompass: false,
+    gold: 20000,
+    totalKills: 0,
+    maxCombo: 0,
+    bestKillStreak: 0,
+    achievements: {
+        firstBlood: false,
+        comboMaster: false,
+        dragonSlayer: false,
+        flawlessVictory: false
+    }
+};
+
+// ===============================
+// ПЕРЕМЕННЫЕ СОСТОЯНИЯ
+// ===============================
+let isCombatLocked = false;
+let currentCombatEnemy = null;
+let combatTurn = 0;
+const maxCombatTurns = 10;
+let compassCollapsed = false;
+let mapCollapsed = false;
+let hudHidden = false;
+let activeTorch = null;
+let torchUses = 0;
+let playerArrows = 0;
+let firstTimePlaying = true;
+
+// ===============================
+// КЛАСС RANDOM
+// ===============================
+class Random {
+    constructor(seed) { this.seed = seed; }
+    next() {
+        this.seed = (this.seed * 9301 + 49297) % 233280;
+        return this.seed / 233280;
+    }
+    int(min, max) {
+        return Math.floor(this.next() * (max - min + 1)) + min;
+    }
+    chance(percent) {
+        return this.next() < percent / 100;
+    }
+    choice(arr) {
+        return arr[this.int(0, arr.length - 1)];
+    }
+    weightedChoice(items) {
+        const totalRarity = items.reduce((sum, item) => sum + item.rarity, 0);
+        let random = this.next() * totalRarity;
+        for (const item of items) {
+            random -= item.rarity;
+            if (random <= 0) return item;
+        }
+        return items[items.length - 1];
+    }
+}
+
+const random = new Random(config.seed);
+
+// ===============================
+// ФУНКЦИИ TELEGRAM
+// ===============================
+
+// Тактильная обратная связь
+function hapticFeedback(style = 'medium') {
+    if (tg && tg.HapticFeedback) {
+        try {
+            switch(style) {
+                case 'light':
+                    tg.HapticFeedback.impactOccurred('light');
+                    break;
+                case 'medium':
+                    tg.HapticFeedback.impactOccurred('medium');
+                    break;
+                case 'heavy':
+                    tg.HapticFeedback.impactOccurred('heavy');
+                    break;
+                case 'success':
+                    tg.HapticFeedback.notificationOccurred('success');
+                    break;
+                case 'error':
+                    tg.HapticFeedback.notificationOccurred('error');
+                    break;
+            }
+        } catch (e) {
+            console.log('Haptic feedback error:', e);
+        }
+    }
+}
+
+// Сохранение в облако
+function saveGameToCloud() {
+    if (!tg || !tg.CloudStorage) return;
+    
+    try {
+        const gameState = {
+            player: game.player,
+            gold: game.gold,
+            health: config.playerHealth,
+            maxHealth: config.playerMaxHealth,
+            level: config.playerLevel,
+            xp: config.playerXP,
+            steps: game.steps,
+            inventory: game.inventory.map(w => w ? w.name : null),
+            activeWeapon: game.activeWeapon,
+            totalKills: game.totalKills,
+            achievements: game.achievements,
+            discoveredRooms: Array.from(game.discoveredRooms),
+            hasMap: game.hasMap,
+            hasCompass: game.hasCompass,
+            hasSchematic: game.hasSchematic,
+            torchUses: torchUses || 0,
+            playerArrows: playerArrows || 0
+        };
+        
+        tg.CloudStorage.setItem('mazeSave', JSON.stringify(gameState), (error) => {
+            if (error) {
+                console.log('Ошибка сохранения:', error);
+            } else {
+                console.log('Игра сохранена в облако');
+            }
+        });
+    } catch (e) {
+        console.log('Error saving game:', e);
+    }
+}
+
+// Загрузка из облака
+function loadGameFromCloud() {
+    if (!tg || !tg.CloudStorage) {
+        console.log('CloudStorage не доступен');
+        return;
+    }
+    
+    tg.CloudStorage.getItem('mazeSave', (error, value) => {
+        if (error) {
+            console.log('Ошибка загрузки из облака:', error);
+            return;
+        }
+        
+        if (!value) {
+            console.log('Нет сохранения в облаке');
+            return;
+        }
+        
+        try {
+            const gameState = JSON.parse(value);
+            
+            if (gameState.player) game.player = gameState.player;
+            if (gameState.gold !== undefined) game.gold = gameState.gold;
+            if (gameState.health !== undefined) config.playerHealth = gameState.health;
+            if (gameState.maxHealth !== undefined) config.playerMaxHealth = gameState.maxHealth;
+            if (gameState.level !== undefined) config.playerLevel = gameState.level;
+            if (gameState.xp !== undefined) config.playerXP = gameState.xp;
+            if (gameState.steps !== undefined) game.steps = gameState.steps;
+            if (gameState.activeWeapon !== undefined) game.activeWeapon = gameState.activeWeapon;
+            if (gameState.totalKills !== undefined) game.totalKills = gameState.totalKills;
+            if (gameState.achievements) game.achievements = gameState.achievements;
+            if (gameState.discoveredRooms) game.discoveredRooms = new Set(gameState.discoveredRooms);
+            
+            game.hasMap = gameState.hasMap || false;
+            game.hasCompass = gameState.hasCompass || false;
+            game.hasSchematic = gameState.hasSchematic || false;
+            torchUses = gameState.torchUses || 0;
+            playerArrows = gameState.playerArrows || 0;
+            
+            if (gameState.inventory) {
+                game.inventory = [weapons.fist, null, null, null];
+                gameState.inventory.forEach((weaponName, index) => {
+                    if (weaponName) {
+                        const weapon = Object.values(weapons).find(w => w.name === weaponName);
+                        if (weapon) game.inventory[index] = weapon;
+                    }
+                });
+            }
+            
+            showNotification('Игра загружена из облака!', 2000);
+            updateUI();
+            updateInventoryDisplay();
+            draw();
+            updateMiniMap();
+            updateCompass();
+            
+        } catch (e) {
+            console.log('Ошибка парсинга сохранения:', e);
+        }
+    });
+}
+
+// ===============================
+// ФУНКЦИИ СОХРАНЕНИЯ В LOCALSTORAGE
+// ===============================
+function saveUISettings() {
+    const uiSettings = {
+        compassCollapsed: compassCollapsed,
+        mapCollapsed: mapCollapsed,
+        showCompass: config.showCompass,
+        showMap: config.showMap,
+        autoAttack: config.autoAttack,
+        theme: config.currentTheme,
+        playerGold: game.gold,
+        playerArrows: playerArrows,
+        torchUses: torchUses,
+        hasTorch: !!activeTorch,
+        playerLevel: config.playerLevel,
+        playerHealth: config.playerHealth,
+        playerMaxHealth: config.playerMaxHealth
+    };
+    
+    try {
+        localStorage.setItem('mazeUISettings', JSON.stringify(uiSettings));
+    } catch (e) {
+        console.log('Не удалось сохранить настройки UI');
+    }
+}
+
+function loadUISettings() {
+    try {
+        const saved = localStorage.getItem('mazeUISettings');
+        if (saved) {
+            const uiSettings = JSON.parse(saved);
+            
+            compassCollapsed = uiSettings.compassCollapsed || false;
+            mapCollapsed = uiSettings.mapCollapsed || false;
+            config.showCompass = uiSettings.showCompass || false;
+            config.showMap = uiSettings.showMap || false;
+            config.autoAttack = uiSettings.autoAttack !== undefined ? uiSettings.autoAttack : true;
+            config.currentTheme = uiSettings.theme || 'dungeon';
+            game.gold = uiSettings.playerGold || 0;
+            config.playerLevel = uiSettings.playerLevel || 1;
+            config.playerHealth = uiSettings.playerHealth || 100;
+            config.playerMaxHealth = uiSettings.playerMaxHealth || 100;
+            playerArrows = uiSettings.playerArrows || 0;
+            torchUses = uiSettings.torchUses || 0;
+            
+            if (uiSettings.hasTorch) {
+                activeTorch = { 
+                    ...items.torch, 
+                    uses: torchUses 
+                };
+            }
+        }
+    } catch (e) {
+        console.log('Не удалось загрузить настройки UI');
+    }
+}
+
+function applyUISettings() {
+    const compassHud = document.getElementById('compassHud');
+    const compassCollapseBtn = compassHud.querySelector('.collapse-btn');
+    
+    if (compassCollapsed) {
+        compassHud.classList.add('collapsed');
+        if (compassCollapseBtn) compassCollapseBtn.textContent = '+';
+    } else {
+        compassHud.classList.remove('collapsed');
+        if (compassCollapseBtn) compassCollapseBtn.textContent = '−';
+    }
+    
+    const miniMap = document.getElementById('miniMap');
+    const mapCollapseBtn = miniMap.querySelector('.collapse-btn');
+    
+    if (mapCollapsed) {
+        miniMap.classList.add('collapsed');
+        if (mapCollapseBtn) mapCollapseBtn.textContent = '+';
+    } else {
+        miniMap.classList.remove('collapsed');
+        if (mapCollapseBtn) mapCollapseBtn.textContent = '−';
+    }
+    
+    updateCompass();
+    updateMiniMap();
+    draw();
+}
+
+// ===============================
+// ФУНКЦИИ ГЕНЕРАЦИИ ЛАБИРИНТА
+// ===============================
+function generateLevel(floor) {
+    const size = config.levelSize;
+    const maze = Array(size).fill().map(() => Array(size).fill(0));
+    
+    const startX = Math.floor(size / 2);
+    const startY = Math.floor(size / 2);
+    const stack = [{x: startX, y: startY}];
+    maze[startY][startX] = 1;
+    
+    const directions = [
+        {dx: 1, dy: 0}, {dx: -1, dy: 0},
+        {dx: 0, dy: 1}, {dx: 0, dy: -1}
+    ];
+    
+    while (stack.length > 0) {
+        const current = stack[stack.length - 1];
+        const neighbors = [];
+        
+        for (const dir of directions) {
+            const nx = current.x + dir.dx * 2;
+            const ny = current.y + dir.dy * 2;
+            
+            if (nx >= 1 && nx < size - 1 && ny >= 1 && ny < size - 1) {
+                if (maze[ny][nx] === 0) {
+                    neighbors.push({dir, nx, ny});
+                }
+            }
+        }
+        
+        if (neighbors.length > 0) {
+            const next = neighbors[random.int(0, neighbors.length - 1)];
+            const wx = current.x + next.dir.dx;
+            const wy = current.y + next.dir.dy;
+            
+            maze[wy][wx] = 1;
+            maze[next.ny][next.nx] = 1;
+            stack.push({x: next.nx, y: next.ny});
+        } else {
+            stack.pop();
+        }
+    }
+    
+    for (let i = 0; i < size * 3; i++) {
+        const x = random.int(1, size - 2);
+        const y = random.int(1, size - 2);
+        
+        if (maze[y][x] === 0) {
+            let walls = 0;
+            for (const dir of directions) {
+                const nx = x + dir.dx;
+                const ny = y + dir.dy;
+                if (maze[ny] && maze[ny][nx] === 1) walls++;
+            }
+            if (walls >= 2 && random.chance(40)) {
+                maze[y][x] = 1;
+            }
+        }
+    }
+    
+    return maze;
+}
+
+function generateExitPosition() {
+    const exitFloor = random.int(0, config.levels - 1);
+    let exitX, exitY;
+    let attempts = 0;
+    
+    while (attempts < 1000) {
+        exitX = random.int(1, config.levelSize - 2);
+        exitY = random.int(1, config.levelSize - 2);
+        
+        if (game.levels[exitFloor][exitY][exitX] === 1 &&
+            !getStairsAt(exitX, exitY, exitFloor) &&
+            !getTeleportAt(exitX, exitY, exitFloor) &&
+            !getEnemyAt(exitX, exitY, exitFloor) &&
+            !getItemAt(exitX, exitY, exitFloor)) {
+            
+            if (exitFloor === 0) {
+                const startX = Math.floor(config.levelSize / 2);
+                const startY = Math.floor(config.levelSize / 2);
+                const distance = Math.sqrt(Math.pow(exitX - startX, 2) + Math.pow(exitY - startY, 2));
+                
+                if (distance > config.levelSize / 3) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        attempts++;
+    }
+    
+    if (attempts >= 1000) {
+        for (let y = config.levelSize - 2; y >= 1; y--) {
+            for (let x = config.levelSize - 2; x >= 1; x--) {
+                if (game.levels[exitFloor][y][x] === 1) {
+                    exitX = x;
+                    exitY = y;
+                    break;
+                }
+            }
+        }
+    }
+    
+    return { x: exitX, y: exitY, floor: exitFloor };
+}
+
+function generateAllLevels() {
+    game.levels = [];
+    game.stairs = [];
+    game.teleports = [];
+    game.enemies = [];
+    game.items = [];
+    game.discoveredRooms.clear();
+    
+    for (let floor = 0; floor < config.levels; floor++) {
+        game.levels.push(generateLevel(floor));
+        
+        if (floor < config.levels - 1) {
+            let attempts = 0;
+            while (attempts < 100) {
+                const x = random.int(1, config.levelSize - 2);
+                const y = random.int(1, config.levelSize - 2);
+                if (game.levels[floor][y][x] === 1) {
+                    game.stairs.push({x, y, floor, direction: 'up'});
+                    break;
+                }
+                attempts++;
+            }
+        }
+        
+        if (floor > 0) {
+            const upStair = game.stairs.find(s => s.floor === floor - 1 && s.direction === 'up');
+            if (upStair) {
+                game.stairs.push({x: upStair.x, y: upStair.y, floor, direction: 'down'});
+            }
+        }
+        
+        const teleportCount = random.int(2, 4);
+        for (let i = 0; i < teleportCount; i++) {
+            let attempts = 0;
+            while (attempts < 100) {
+                const x = random.int(1, config.levelSize - 2);
+                const y = random.int(1, config.levelSize - 2);
+                if (game.levels[floor][y][x] === 1 && 
+                    !getStairsAt(x, y, floor) &&
+                    !getTeleportAt(x, y, floor)) {
+                    game.teleports.push({
+                        x, y, floor,
+                        targetFloor: random.int(0, config.levels - 1),
+                        active: true,
+                        used: false
+                    });
+                    break;
+                }
+                attempts++;
+            }
+        }
+        
+        const enemyCount = random.int(5, 10);
+        for (let i = 0; i < enemyCount; i++) {
+            let attempts = 0;
+            while (attempts < 100) {
+                const x = random.int(1, config.levelSize - 2);
+                const y = random.int(1, config.levelSize - 2);
+                if (game.levels[floor][y][x] === 1 && 
+                    !getStairsAt(x, y, floor) &&
+                    !getTeleportAt(x, y, floor) &&
+                    !getEnemyAt(x, y, floor)) {
+                    
+                    const enemyList = Object.values(enemies);
+                    const availableEnemies = enemyList.filter(e => e.rarity <= Math.floor(floor) + 1);
+                    const enemyType = random.weightedChoice(availableEnemies);
+                    
+                    game.enemies.push({
+                        x, y, floor,
+                        type: enemyType,
+                        health: enemyType.health,
+                        maxHealth: enemyType.health,
+                        id: Math.random().toString(36).substr(2, 9)
+                    });
+                    break;
+                }
+                attempts++;
+            }
+        }
+        
+        const itemCount = random.int(5, 10);
+        for (let i = 0; i < itemCount; i++) {
+            let attempts = 0;
+            while (attempts < 100) {
+                const x = random.int(1, config.levelSize - 2);
+                const y = random.int(1, config.levelSize - 2);
+                if (game.levels[floor][y][x] === 1 && 
+                    !getStairsAt(x, y, floor) &&
+                    !getTeleportAt(x, y, floor) &&
+                    !getEnemyAt(x, y, floor) &&
+                    !getItemAt(x, y, floor)) {
+                    
+                    let itemList = [];
+                    
+                    if (floor === 0) {
+                        const rand = random.next();
+                        if (rand < 0.4) itemList = [items.healthPotion];
+                        else if (rand < 0.7) itemList = [items.map];
+                        else itemList = [items.schematic];
+                    } else if (floor === 1) {
+                        const rand = random.next();
+                        if (rand < 0.3) itemList = [items.compass];
+                        else if (rand < 0.7) itemList = [items.healthPotion, items.strengthPotion];
+                        else itemList = Object.values(weapons).filter(w => w.rarity <= 3);
+                    } else {
+                        itemList = Object.values(items);
+                        if (floor > 2) {
+                            itemList = itemList.filter(item => 
+                                item.type !== 'map' && item.type !== 'compass' && item.type !== 'schematic'
+                            );
+                        }
+                    }
+                    
+                    const itemType = random.choice(itemList);
+                    
+                    game.items.push({
+                        x, y, floor,
+                        type: itemType,
+                        collected: false,
+                        id: Math.random().toString(36).substr(2, 9)
+                    });
+                    break;
+                }
+                attempts++;
+            }
+        }
+        
+        if (random.chance(20)) {
+            let attempts = 0;
+            while (attempts < 100) {
+                const x = random.int(1, config.levelSize - 2);
+                const y = random.int(1, config.levelSize - 2);
+                if (game.levels[floor][y][x] === 1 && 
+                    !getStairsAt(x, y, floor) &&
+                    !getTeleportAt(x, y, floor) &&
+                    !getEnemyAt(x, y, floor) &&
+                    !getItemAt(x, y, floor)) {
+                    
+                    const weaponList = Object.values(weapons);
+                    const availableWeapons = weaponList.filter(w => w.rarity <= Math.floor(floor) + 2);
+                    const weaponType = random.weightedChoice(availableWeapons);
+                    
+                    game.items.push({
+                        x, y, floor,
+                        type: weaponType,
+                        collected: false,
+                        id: Math.random().toString(36).substr(2, 9),
+                        isWeapon: true
+                    });
+                    break;
+                }
+                attempts++;
+            }
+        }
+    }
+    
+    const startX = Math.floor(config.levelSize / 2);
+    const startY = Math.floor(config.levelSize / 2);
+    game.player = { x: startX, y: startY, floor: 0 };
+    
+    game.exit = generateExitPosition();
+    
+    updateCamera();
+    updateInventoryDisplay();
+    updateDiscoveredRooms();
+}
+
+// ===============================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+// ===============================
+function getStairsAt(x, y, floor) {
+    return game.stairs.find(s => s.x === x && s.y === y && s.floor === floor);
+}
+
+function getTeleportAt(x, y, floor) {
+    return game.teleports.find(t => t.x === x && t.y === y && t.floor === floor && t.active && !t.used);
+}
+
+function getEnemyAt(x, y, floor) {
+    return game.enemies.find(e => e.x === x && e.y === y && e.floor === floor && e.health > 0);
+}
+
+function getItemAt(x, y, floor) {
+    return game.items.find(i => i.x === x && i.y === y && i.floor === floor && !i.collected);
+}
+
+function updateCamera() {
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const playerScreenX = game.player.x * config.cellSize;
+    const playerScreenY = game.player.y * config.cellSize;
+    
+    config.cameraX = centerX - playerScreenX;
+    config.cameraY = centerY - playerScreenY;
+}
+
+function toScreen(x, y) {
+    return {
+        x: x * config.cellSize + config.cameraX,
+        y: y * config.cellSize + config.cameraY
+    };
+}
+
+function updateDiscoveredRooms() {
+    const floor = game.player.floor;
+    const level = game.levels[floor];
+    const visibleDistance = config.fogDistance + config.buffs.speed.value;
+    
+    for (let y = 0; y < config.levelSize; y++) {
+        for (let x = 0; x < config.levelSize; x++) {
+            if (level[y][x] === 1) {
+                const distance = Math.sqrt(
+                    Math.pow(x - game.player.x, 2) + 
+                    Math.pow(y - game.player.y, 2)
+                );
+                
+                if (distance <= visibleDistance) {
+                    const roomKey = `${floor}:${x}:${y}`;
+                    game.discoveredRooms.add(roomKey);
+                }
+            }
+        }
+    }
+}
+
+function checkLineOfSight(x1, y1, x2, y2, floor) {
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = (x1 < x2) ? 1 : -1;
+    const sy = (y1 < y2) ? 1 : -1;
+    let err = dx - dy;
+    
+    let x = x1;
+    let y = y1;
+    
+    while (true) {
+        if (x === x2 && y === y2) return true;
+        
+        if (game.levels[floor][y][x] === 0) return false;
+        
+        const e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            x += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+
+function findNearestItem(itemType) {
+    const itemsOnFloor = game.items.filter(i => 
+        i.floor === game.player.floor && 
+        !i.collected && 
+        i.type.type === itemType
+    );
+    
+    if (itemsOnFloor.length === 0) {
+        for (let floor = 0; floor < config.levels; floor++) {
+            if (floor === game.player.floor) continue;
+            
+            const items = game.items.filter(i => 
+                i.floor === floor && 
+                !i.collected && 
+                i.type.type === itemType
+            );
+            
+            if (items.length > 0) {
+                const stairs = findStairsToFloor(floor);
+                if (stairs) {
+                    return {
+                        x: stairs.x,
+                        y: stairs.y,
+                        floor: stairs.floor,
+                        name: itemType === 'map' ? 'Лестница к карте' : 'Лестница к схеме',
+                        type: 'stairs'
+                    };
+                }
+            }
+        }
+        return null;
+    }
+    
+    let nearestItem = null;
+    let nearestDistance = Infinity;
+    
+    for (const item of itemsOnFloor) {
+        const distance = Math.sqrt(
+            Math.pow(item.x - game.player.x, 2) + 
+            Math.pow(item.y - game.player.y, 2)
+        );
+        
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestItem = {
+                x: item.x,
+                y: item.y,
+                floor: item.floor,
+                name: itemType === 'map' ? 'Карта уровня' : 'Схема лабиринта',
+                type: itemType
+            };
+        }
+    }
+    
+    return nearestItem;
+}
+
+function findStairsToFloor(targetFloor) {
+    if (game.player.floor === targetFloor) return null;
+    
+    const direction = targetFloor > game.player.floor ? 'up' : 'down';
+    const stairsOnFloor = game.stairs.filter(s => 
+        s.floor === game.player.floor && 
+        s.direction === direction
+    );
+    
+    if (stairsOnFloor.length === 0) return null;
+    
+    let nearestStairs = null;
+    let nearestDistance = Infinity;
+    
+    for (const stair of stairsOnFloor) {
+        const distance = Math.sqrt(
+            Math.pow(stair.x - game.player.x, 2) + 
+            Math.pow(stair.y - game.player.y, 2)
+        );
+        
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestStairs = stair;
+        }
+    }
+    
+    return nearestStairs;
+}
+
+function findNearestMap() {
+    const mapsOnFloor = game.items.filter(i => 
+        i.floor === game.player.floor && 
+        !i.collected && 
+        i.type.type === 'map'
+    );
+    
+    if (mapsOnFloor.length === 0) {
+        for (let floor = 0; floor < config.levels; floor++) {
+            if (floor === game.player.floor) continue;
+            
+            const maps = game.items.filter(i => 
+                i.floor === floor && 
+                !i.collected && 
+                i.type.type === 'map'
+            );
+            
+            if (maps.length > 0) {
+                const stairs = findStairsToFloor(floor);
+                if (stairs) {
+                    return {
+                        x: stairs.x,
+                        y: stairs.y,
+                        floor: stairs.floor,
+                        name: 'Лестница к карте',
+                        type: 'stairs'
+                    };
+                }
+            }
+        }
+        return null;
+    }
+    
+    let nearestMap = null;
+    let nearestDistance = Infinity;
+    
+    for (const map of mapsOnFloor) {
+        const distance = Math.sqrt(
+            Math.pow(map.x - game.player.x, 2) + 
+            Math.pow(map.y - game.player.y, 2)
+        );
+        
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestMap = {
+                x: map.x,
+                y: map.y,
+                floor: map.floor,
+                name: 'Карта уровня',
+                type: 'map'
+            };
+        }
+    }
+    
+    return nearestMap;
+}
+
+// ===============================
+// ФУНКЦИИ ИГРОВОЙ ЛОГИКИ
+// ===============================
+
+function calculatePlayerDamage() {
+    const weapon = game.inventory[game.activeWeapon];
+    const baseDamage = weapon ? weapon.damage : weapons.fist.damage;
+    
+    let totalDamage = baseDamage + config.buffs.strength.value;
+    totalDamage += config.playerLevel * config.damageBonusPerLevel;
+    
+    totalDamage = Math.floor(totalDamage);
+    
+    return {
+        min: totalDamage,
+        base: baseDamage,
+        strengthBonus: config.buffs.strength.value,
+        levelBonus: config.playerLevel * config.damageBonusPerLevel
+    };
+}
+
+function updateDamageInfo() {
+    const damageInfoElement = document.getElementById('damageInfo');
+    if (!damageInfoElement) return;
+    
+    const damageInfo = calculatePlayerDamage();
+    
+    let damageText = `⚔️ ${damageInfo.min}`;
+    damageInfoElement.textContent = damageText;
+    
+    const weapon = game.inventory[game.activeWeapon];
+    const weaponName = weapon ? weapon.name : "Кулаки";
+    
+    damageInfoElement.title = `${weaponName}\n` +
+                            `Урон: ${damageInfo.min}\n` +
+                            `Базовый: ${damageInfo.base}\n` +
+                            `Сила: +${damageInfo.strengthBonus}\n` +
+                            `Уровень: +${damageInfo.levelBonus}`;
+}
+
+function movePlayer(dx, dy) {
+    if (isCombatLocked) {
+        showNotification('Идет бой! Отключите автоатаку или сбегите', 1500);
+        return false;
+    }
+    if (game.foundExit) return false;
+    
+    const newX = game.player.x + dx;
+    const newY = game.player.y + dy;
+    const level = game.levels[game.player.floor];
+    
+    if (newX >= 0 && newX < config.levelSize && 
+        newY >= 0 && newY < config.levelSize && 
+        level[newY][newX] === 1) {
+        
+        const enemy = getEnemyAt(newX, newY, game.player.floor);
+        if (enemy) {
+            if (!config.autoAttack) {
+                showNotification('Враг на пути! Тапните по нему для атаки', 1500);
+                return false;
+            } else {
+                startCombat(enemy);
+                return false;
+            }
+        }
+        
+        const teleport = getTeleportAt(newX, newY, game.player.floor);
+        if (teleport && !teleport.used) {
+            useTeleport(teleport);
+            return true;
+        }
+        
+        const item = getItemAt(newX, newY, game.player.floor);
+        if (item) {
+            collectItem(item);
+        }
+        
+        game.player.x = newX;
+        game.player.y = newY;
+        game.steps++;
+        
+        updateDiscoveredRooms();
+        updateBuffs();
+        
+        if (game.player.floor === game.exit.floor && 
+            game.player.x === game.exit.x && 
+            game.player.y === game.exit.y) {
+            game.foundExit = true;
+            
+            tg.MainButton.setText('ПОДЕЛИТЬСЯ');
+            tg.MainButton.show();
+            tg.MainButton.onClick(() => {
+                const message = `🎉 Я прошел лабиринт за ${game.steps} шагов!\nУровень: ${config.playerLevel}\nУбийств: ${game.totalKills}`;
+                
+                if (tg.shareMessage) {
+                    tg.shareMessage(message);
+                } else {
+                    navigator.clipboard.writeText(message);
+                    showNotification('Результат скопирован!', 1500);
+                }
+            });
+            
+            showNotification('🎉 ПОБЕДА! Вы нашли выход из лабиринта! 🎉', 5000);
+        }
+        
+        updateCamera();
+        draw();
+        updateMiniMap();
+        updateCompass();
+        
+        if (currentCombatEnemy && !isCombatLocked) {
+            const distance = Math.sqrt(
+                Math.pow(currentCombatEnemy.x - game.player.x, 2) + 
+                Math.pow(currentCombatEnemy.y - game.player.y, 2)
+            );
+            
+            if (distance > 2) {
+                showNotification('Вы убежали от врага!', 1500);
+                endCombat();
+            }
+        }
+        
+        if (config.autoAttack && !isCombatLocked) {
+            checkAndAttackNearbyEnemies();
+        } else if (!config.autoAttack) {
+            checkEnemyAttacks();
+        }
+        
+        saveGameToCloud();
+        
+        return true;
+    }
+    
+    return false;
+}
+
+function startCombat(enemy) {
+    if (!enemy || enemy.health <= 0 || !config.autoAttack) return;
+    
+    if (isCombatLocked) {
+        return;
+    }
+    
+    console.log("⚔️ Начинается автобой с", enemy.type.name);
+    
+    game.selectedEnemy = enemy.id;
+    currentCombatEnemy = enemy;
+    
+    isCombatLocked = true;
+    combatTurn = 0;
+    
+    updateCombatIndicator();
+    
+    autoCombatLoop();
+}
+
+function autoCombatLoop() {
+    if (!isCombatLocked || !currentCombatEnemy || config.playerHealth <= 0) {
+        endCombat();
+        return;
+    }
+    
+    if (currentCombatEnemy.health <= 0) {
+        endCombat();
+        return;
+    }
+    
+    combatTurn++;
+    console.log(`Ход автобоя: ${combatTurn}`);
+    
+    attackEnemy(currentCombatEnemy.x, currentCombatEnemy.y);
+    
+    setTimeout(() => {
+        if (currentCombatEnemy && currentCombatEnemy.health > 0 && config.playerHealth > 0) {
+            enemyAttack(currentCombatEnemy);
+            
+            if (combatTurn >= maxCombatTurns) {
+                showNotification('Бой затянулся! Можно сбежать (Shift).', 2000);
+                showEscapeButton();
+            }
+            
+            if (config.playerHealth > 0 && currentCombatEnemy.health > 0 && isCombatLocked) {
+                setTimeout(autoCombatLoop, 800);
+            } else {
+                endCombat();
+            }
+        } else {
+            endCombat();
+        }
+    }, 600);
+}
+
+function endCombat() {
+    isCombatLocked = false;
+    currentCombatEnemy = null;
+    combatTurn = 0;
+    game.selectedEnemy = null;
+    
+    hideCombatIndicator();
+    hideEscapeButton();
+    
+    draw();
+}
+
+function checkAndAttackNearbyEnemies() {
+    if (!config.autoAttack || game.foundExit || isCombatLocked) return;
+    
+    const directions = [
+        [0, -1], [1, 0], [0, 1], [-1, 0]
+    ];
+    
+    let closestEnemy = null;
+    let closestDistance = 2;
+    
+    for (const enemy of game.enemies) {
+        if (enemy.floor === game.player.floor && enemy.health > 0) {
+            const distance = Math.abs(enemy.x - game.player.x) + Math.abs(enemy.y - game.player.y);
+            
+            if (distance <= closestDistance) {
+                if (checkLineOfSight(game.player.x, game.player.y, enemy.x, enemy.y, game.player.floor)) {
+                    closestDistance = distance;
+                    closestEnemy = enemy;
+                }
+            }
+        }
+    }
+    
+    if (closestEnemy) {
+        setTimeout(() => {
+            startCombat(closestEnemy);
+        }, 300);
+    }
+}
+
+function showEscapeButton() {
+    const escapeBtn = document.getElementById('escapeBtn');
+    if (escapeBtn) {
+        escapeBtn.classList.add('active');
+    }
+}
+
+function hideEscapeButton() {
+    const escapeBtn = document.getElementById('escapeBtn');
+    if (escapeBtn) {
+        escapeBtn.classList.remove('active');
+    }
+}
+
+function escapeCombat() {
+    if (!isCombatLocked) return;
+    
+    const escapeChance = config.playerHealth / config.playerMaxHealth;
+    
+    if (Math.random() < escapeChance) {
+        showNotification('Вы успешно сбежали!', 2000);
+        
+        const directions = [
+            [0, -1], [1, 0], [0, 1], [-1, 0],
+            [1, -1], [1, 1], [-1, 1], [-1, -1]
+        ];
+        
+        let escaped = false;
+        for (const [dx, dy] of directions.sort(() => Math.random() - 0.5)) {
+            const newX = game.player.x + dx;
+            const newY = game.player.y + dy;
+            const level = game.levels[game.player.floor];
+            
+            if (newX >= 0 && newX < config.levelSize && 
+                newY >= 0 && newY < config.levelSize && 
+                level[newY][newX] === 1 && 
+                !getEnemyAt(newX, newY, game.player.floor)) {
+                
+                game.player.x = newX;
+                game.player.y = newY;
+                escaped = true;
+                break;
+            }
+        }
+        
+        if (escaped) {
+            updateCamera();
+            draw();
+        }
+    } else {
+        showNotification('Не удалось сбежать! Враг контратакует!', 1500);
+        
+        if (currentCombatEnemy) {
+            setTimeout(() => {
+                enemyAttack(currentCombatEnemy);
+            }, 500);
+        }
+    }
+    
+    endCombat();
+}
+
+function updateCombatIndicator() {
+    const combatIndicator = document.getElementById('combatIndicator');
+    const combatEnemyName = document.getElementById('combatEnemyName');
+    const combatLock = document.getElementById('combatLock');
+    
+    if (combatIndicator && currentCombatEnemy) {
+        combatEnemyName.textContent = currentCombatEnemy.type.name;
+        combatIndicator.classList.add('active');
+    }
+    
+    if (combatLock) {
+        combatLock.classList.add('active');
+    }
+}
+
+function hideCombatIndicator() {
+    const combatIndicator = document.getElementById('combatIndicator');
+    const combatLock = document.getElementById('combatLock');
+    
+    if (combatIndicator) {
+        combatIndicator.classList.remove('active');
+    }
+    
+    if (combatLock) {
+        combatLock.classList.remove('active');
+    }
+}
+
+function attackEnemy(x, y) {
+    const enemy = getEnemyAt(x, y, game.player.floor);
+    if (!enemy || enemy.health <= 0) return;
+    
+    const weapon = game.inventory[game.activeWeapon];
+    const baseDamage = weapon ? weapon.damage : weapons.fist.damage;
+    
+    if (weapon && weapon.name === 'Лук') {
+        if (playerArrows <= 0) {
+            showNotification('Нет стрел!', 1500);
+            return;
+        }
+    }
+    
+    let totalDamage = baseDamage + config.buffs.strength.value;
+    totalDamage += config.playerLevel * config.damageBonusPerLevel;
+    
+    let isCritical = false;
+    if (Math.random() < config.critChance) {
+        isCritical = true;
+        totalDamage *= config.critMultiplier;
+        
+        showNotification("💥 КРИТИЧЕСКИЙ УДАР!", 1000);
+        hapticFeedback('heavy');
+        
+        hitEffect.style.opacity = 0.8;
+        hitEffect.style.backgroundColor = 'rgba(255, 100, 0, 0.5)';
+        setTimeout(() => {
+            hitEffect.style.opacity = 0;
+            hitEffect.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+        }, 300);
+    } else {
+        hapticFeedback('medium');
+    }
+    
+    enemy.health -= Math.floor(totalDamage);
+    
+    game.damageNumbers.push({
+        x: enemy.x,
+        y: enemy.y,
+        value: `-${Math.floor(totalDamage)}${isCritical ? "!" : ""}`,
+        lifetime: 1000,
+        maxLifetime: 1000,
+        isPlayer: false,
+        isCritical: isCritical
+    });
+    
+    hitEffect.style.opacity = 0.5;
+    setTimeout(() => {
+        hitEffect.style.opacity = 0;
+    }, 200);
+    
+    if (weapon && weapon.name === 'Лук' && !isCritical) {
+        playerArrows--;
+        showNotification(`Осталось стрел: ${playerArrows}`, 1500);
+        updateInventoryDisplay();
+    }
+    
+    if (enemy.health <= 0) {
+        enemy.health = 0;
+        processEnemyKill(enemy);
+    }
+    
+    draw();
+    updateUI();
+}
+
+function enemyAttack(enemy) {
+    if (!enemy) return;
+    
+    const distance = Math.sqrt(
+        Math.pow(enemy.x - game.player.x, 2) + 
+        Math.pow(enemy.y - game.player.y, 2)
+    );
+    
+    if (distance > 2.5) {
+        if (config.autoAttack && isCombatLocked) {
+            showNotification(`${enemy.type.name} не может достать вас!`, 1500);
+        }
+        return;
+    }
+    
+    if (!checkLineOfSight(enemy.x, enemy.y, game.player.x, game.player.y, game.player.floor)) {
+        if (config.autoAttack && isCombatLocked) {
+            showNotification(`${enemy.type.name} потерял вас из виду!`, 1500);
+        }
+        return;
+    }
+    
+    const baseDamage = enemy.type.damage;
+    const defense = config.buffs.defense.value;
+    const totalDamage = Math.max(1, baseDamage - defense);
+    
+    config.playerHealth -= totalDamage;
+    
+    game.damageNumbers.push({
+        x: game.player.x,
+        y: game.player.y,
+        value: `-${totalDamage}`,
+        lifetime: 1000,
+        maxLifetime: 1000,
+        isPlayer: true
+    });
+    
+    hitEffect.style.opacity = 0.5;
+    setTimeout(() => {
+        hitEffect.style.opacity = 0;
+    }, 200);
+    
+    hapticFeedback('heavy');
+    
+    updateUI();
+    draw();
+    
+    if (config.playerHealth <= 0) {
+        gameOver();
+    }
+}
+
+function processEnemyKill(enemy) {
+    game.totalKills++;
+    config.killStreak++;
+    
+    game.maxCombo = Math.max(game.maxCombo, config.killStreak);
+    
+    let healthRegen = config.healthRegenPerKill;
+    let comboMultiplier = 1;
+    let comboMessage = "";
+    
+    const now = Date.now();
+    if (now - config.lastKillTime < config.comboTimeout) {
+        comboMultiplier = 1 + (config.killStreak - 1) * 0.2;
+        healthRegen += config.killRewards.healthBonus * (config.killStreak - 1);
+        comboMessage = ` x${comboMultiplier.toFixed(1)} комбо!`;
+        
+        if (config.killStreak >= 5 && !game.achievements.comboMaster) {
+            game.achievements.comboMaster = true;
+            showNotification("🏆 Достижение: Мастер комбо (5 убийств подряд)!", 3000);
+        }
+    } else {
+        config.killStreak = 1;
+    }
+    
+    config.lastKillTime = now;
+    
+    if (game.totalKills === 1 && !game.achievements.firstBlood) {
+        game.achievements.firstBlood = true;
+        showNotification("🏆 Достижение: Первая кровь!", 3000);
+    }
+    
+    if (enemy.type.name === "Дракон" && !game.achievements.dragonSlayer) {
+        game.achievements.dragonSlayer = true;
+        showNotification("🏆 Достижение: Убийца драконов!", 3000);
+    }
+    
+    let baseXP = enemy.type.xp;
+    let totalXP = Math.floor(baseXP * comboMultiplier * config.xpMultiplier);
+    
+    if (enemy.type.rarity >= 4) {
+        totalXP = Math.floor(totalXP * 1.5);
+    }
+    
+    config.playerXP += totalXP;
+    
+    config.playerHealth = Math.min(config.playerMaxHealth, config.playerHealth + healthRegen);
+    
+    let goldAmount = Math.floor(enemy.type.xp / 10) + enemy.type.rarity;
+    goldAmount = Math.floor(goldAmount * comboMultiplier);
+    if (goldAmount < 30) goldAmount = 30;
+    if (enemy.type.rarity < 3 && goldAmount > 75) goldAmount = 75;
+    
+    game.gold += goldAmount;
+    createGoldEffect(enemy.x, enemy.y, goldAmount);
+    
+    let rewardMessage = `+${totalXP} опыта`;
+    if (healthRegen > 0) {
+        rewardMessage += ` +${healthRegen} HP`;
+    }
+    rewardMessage += ` +${goldAmount}🪙`;
+    if (comboMessage) {
+        rewardMessage += comboMessage;
+    }
+    
+    showNotification(`Победа над ${enemy.type.name}! ${rewardMessage}`, 2000);
+    hapticFeedback('success');
+    
+    checkLevelUp();
+    updateStatsDisplay();
+    saveGameToCloud();
+    saveUISettings();
+}
+
+function createGoldEffect(x, y, amount) {
+    const goldEffect = {
+        x: x,
+        y: y,
+        amount: amount,
+        particles: [],
+        lifetime: 1000,
+        maxLifetime: 1000
+    };
+    
+    for (let i = 0; i < 5 + Math.min(amount / 10, 10); i++) {
+        goldEffect.particles.push({
+            x: x,
+            y: y,
+            dx: (Math.random() - 0.5) * 0.3,
+            dy: -Math.random() * 0.4,
+            size: 2 + Math.random() * 3,
+            lifetime: 800 + Math.random() * 400
+        });
+    }
+    
+    game.damageNumbers.push(goldEffect);
+}
+
+function checkLevelUp() {
+    if (config.playerXP >= config.xpToNextLevel) {
+        config.playerLevel++;
+        config.playerMaxHealth += 25;
+        config.playerHealth = config.playerMaxHealth;
+        config.playerXP -= config.xpToNextLevel;
+        config.xpToNextLevel = Math.floor(config.xpToNextLevel * 1.5);
+        
+        config.critChance = Math.min(0.3, 0.1 + (config.playerLevel - 1) * 0.01);
+        config.xpMultiplier = 1 + (config.playerLevel - 1) * 0.05;
+        
+        showNotification(
+            `🎉 Уровень ${config.playerLevel}!\n` +
+            `+25 к максимальному здоровью\n` +
+            `Шанс крита: ${Math.round(config.critChance * 100)}%\n` +
+            `Бонус опыта: +${Math.round((config.xpMultiplier - 1) * 100)}%`,
+            4000
+        );
+        
+        updateUI();
+        updateStatsDisplay();
+        updateDamageInfo();
+    }
+}
+
+function checkEnemyAttacks() {
+    const directions = [
+        [0, -1], [1, 0], [0, 1], [-1, 0]
+    ];
+    
+    for (const [dx, dy] of directions) {
+        const enemy = getEnemyAt(
+            game.player.x + dx, 
+            game.player.y + dy, 
+            game.player.floor
+        );
+        
+        if (enemy && enemy.health > 0) {
+            enemyAttack(enemy);
+            return;
+        }
+    }
+}
+
+function collectItem(item) {
+    item.collected = true;
+    hapticFeedback('light');
+    
+    if (item.type.type === 'map') {
+        game.hasMap = true;
+        config.showMap = true;
+        updateMiniMap();
+        draw();
+        
+        showNotification('🎉 Найдена карта! Теперь видна вся карта этажа\n🗺️ Карта автоматически включена', 2500);
+        return;
+    }
+    
+    if (item.type.type === 'schematic') {
+        game.hasSchematic = true;
+        config.showSchematic = true;
+        updateMiniMap();
+        
+        showNotification('🎉 Найдена схема! Открыта мини-карта\n📋 Схема автоматически включена', 2500);
+        return;
+    }
+    
+    if (item.type.type === 'compass') {
+        game.hasCompass = true;
+        config.showCompass = true;
+        setupCompassControls();
+        updateCompass();
+        showNotification('🎉 Найден магический компас! Выберите цель для навигации\n🧭 Компас автоматически включен', 2500);
+        return;
+    }
+    
+    if (item.type.type === 'gold') {
+        game.gold += item.type.value;
+        showNotification(`Найдено золото: +${item.type.value}🪙`, 1500);
+        updateStatsDisplay();
+        saveUISettings();
+        return;
+    }
+    
+    if (item.type.type === 'torch') {
+        addToInventory(item.type);
+        return;
+    }
+    
+    if (item.type.type === 'ammo') {
+        addToInventory(item.type);
+        return;
+    }
+    
+    if (item.isWeapon) {
+        let added = false;
+        
+        for (let i = 0; i < game.inventory.length; i++) {
+            if (!game.inventory[i]) {
+                game.inventory[i] = item.type;
+                added = true;
+                showNotification(`Найдено: ${item.type.name}! Урон: ${item.type.damage}`, 2000);
+                break;
+            }
+        }
+        
+        if (!added) {
+            const oldWeapon = game.inventory[0];
+            game.inventory[0] = item.type;
+            showNotification(`Заменил ${oldWeapon.name} на ${item.type.name}!`, 2000);
+        }
+        
+        updateInventoryDisplay();
+        saveUISettings();
+        return;
+    }
+    
+    switch(item.type.type) {
+        case 'heal':
+            config.playerHealth = Math.min(config.playerMaxHealth, config.playerHealth + item.type.value);
+            showNotification(`+${item.type.value} HP!`, 1500);
+            updateUI();
+            break;
+        case 'buff':
+            config.buffs.strength.value += item.type.value;
+            config.buffs.strength.duration = 10;
+            showNotification(`+${item.type.value} к урону на 10 шагов!`, 1500);
+            break;
+        case 'defense':
+            config.buffs.defense.value += item.type.value;
+            config.buffs.defense.duration = 10;
+            showNotification(`+${item.type.value} к защите на 10 шагов!`, 1500);
+            break;
+        case 'speed':
+            config.buffs.speed.value += item.type.value;
+            config.buffs.speed.duration = 10;
+            showNotification(`Увеличен обзор на ${item.type.value} клетки!`, 1500);
+            break;
+        case 'treasure':
+            config.playerXP += item.type.value;
+            checkLevelUp();
+            showNotification(`Сокровище! +${item.type.value} опыта`, 1500);
+            break;
+    }
+    
+    updateInventoryDisplay();
+    saveUISettings();
+    updateUI();
+}
+
+function useStairs(direction) {
+    const stairs = game.stairs.find(s => 
+        s.floor === game.player.floor && 
+        s.x === game.player.x && 
+        s.y === game.player.y &&
+        ((direction > 0 && s.direction === 'up') || 
+         (direction < 0 && s.direction === 'down'))
+    );
+    
+    if (!stairs) {
+        showNotification('Лестницы нет здесь', 1500);
+        return;
+    }
+    
+    const targetFloor = game.player.floor + direction;
+    if (targetFloor < 0 || targetFloor >= config.levels) {
+        showNotification('Нельзя идти дальше', 1500);
+        return;
+    }
+    
+    game.player.floor = targetFloor;
+    updateDiscoveredRooms();
+    updateCamera();
+    draw();
+    updateMiniMap();
+    updateCompass();
+    
+    showNotification(`Этаж ${targetFloor + 1}`, 1500);
+}
+
+function useTeleport(teleport) {
+    if (teleport.used) return;
+    
+    teleport.used = true;
+    const targetFloor = teleport.targetFloor;
+    
+    const targetLevel = game.levels[targetFloor];
+    let targetX = teleport.x;
+    let targetY = teleport.y;
+    
+    let found = false;
+    const directions = [
+        [0, 0], [1, 0], [0, 1], [-1, 0], [0, -1],
+        [1, 1], [-1, 1], [1, -1], [-1, -1]
+    ];
+    
+    for (const [dx, dy] of directions) {
+        const nx = targetX + dx;
+        const ny = targetY + dy;
+        
+        if (nx >= 0 && nx < config.levelSize && 
+            ny >= 0 && ny < config.levelSize && 
+            targetLevel[ny][nx] === 1 && 
+            !getEnemyAt(nx, ny, targetFloor)) {
+            
+            targetX = nx;
+            targetY = ny;
+            found = true;
+            break;
+        }
+    }
+    
+    if (found) {
+        game.player.floor = targetFloor;
+        game.player.x = targetX;
+        game.player.y = targetY;
+        updateDiscoveredRooms();
+        updateCamera();
+        draw();
+        
+        showNotification(`🌀 Телепорт! Этаж ${targetFloor + 1}`, 2000);
+    }
+}
+
+function gameOver() {
+    showNotification(`💀 ИГРА ОКОНЧЕНА! Вы прошли ${game.steps} шагов на уровне ${config.playerLevel}`, 5000);
+    setTimeout(() => {
+        if (confirm('Начать новую игру?')) {
+            newGame();
+        }
+    }, 1000);
+}
+
+function newGame() {
+    config.seed = Date.now();
+    random.seed = config.seed;
+    config.playerHealth = 100;
+    config.playerMaxHealth = 100;
+    config.playerDamage = 3;
+    config.playerDefense = 0;
+    config.playerLevel = 1;
+    config.playerXP = 0;
+    config.xpToNextLevel = 100;
+    config.currentTheme = 'dungeon';
+    config.showCompass = false;
+    config.showMap = false;
+    config.showSchematic = false;
+    config.autoAttack = true;
+    config.compassTarget = 'exit';
+    config.critChance = 0.1;
+    config.xpMultiplier = 1.0;
+    config.killStreak = 0;
+    config.lastKillTime = 0;
+    config.buffs = {
+        strength: { value: 0, duration: 0 },
+        defense: { value: 0, duration: 0 },
+        speed: { value: 0, duration: 0 }
+    };
+    
+    game.inventory = [weapons.fist, null, null, null];
+    game.activeWeapon = 0;
+    game.damageNumbers = [];
+    game.hasMap = false;
+    game.hasCompass = false;
+    game.hasSchematic = false;
+    game.gold = 20000;
+    game.totalKills = 0;
+    game.maxCombo = 0;
+    game.bestKillStreak = 0;
+    
+    activeTorch = null;
+    torchUses = 0;
+    playerArrows = 0;
+    
+    isCombatLocked = false;
+    currentCombatEnemy = null;
+    combatTurn = 0;
+    
+    hideCombatIndicator();
+    hideEscapeButton();
+    generateShopInventory();
+    
+    game.achievements = {
+        firstBlood: false,
+        comboMaster: false,
+        dragonSlayer: false,
+        flawlessVictory: false
+    };
+    
+    generateAllLevels();
+    game.steps = 0;
+    game.foundExit = false;
+    updateDamageInfo();
+    autoAttackToggle.classList.remove('active');
+    updateInventoryDisplay();
+    updateUI();
+    draw();
+    updateMiniMap();
+    updateCompass();
+    toggleMenu();
+    showNotification('Новая игра начата!', 1500);
+}
+
+function changeTheme() {
+    const themeKeys = Object.keys(themes);
+    const currentIndex = themeKeys.indexOf(config.currentTheme);
+    const nextIndex = (currentIndex + 1) % themeKeys.length;
+    config.currentTheme = themeKeys[nextIndex];
+    
+    draw();
+    showNotification(`Тема: ${themes[config.currentTheme].name}`, 1500);
+}
+
+function updateBuffs() {
+    for (const buff in config.buffs) {
+        if (config.buffs[buff].duration > 0) {
+            config.buffs[buff].duration--;
+            if (config.buffs[buff].duration === 0) {
+                config.buffs[buff].value = 0;
+            }
+        }
+    }
+}
+
+function toggleAllHUD() {
+    hudHidden = !hudHidden;
+    
+    const elements = [
+        '.top-panel',
+        '.hud-panel',
+        '.compass-hud',
+        '.mini-map',
+        '.auto-attack-toggle',
+        '.arrow-controls',
+        '.stairs-controls',
+        '.menu-btn'
+    ];
+    
+    elements.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.style.display = hudHidden ? 'none' : '';
+        }
+    });
+    
+    if (!hudHidden) {
+        setTimeout(() => {
+            updateCompass();
+            updateMiniMap();
+            draw();
+        }, 100);
+    }
+}
+
+function toggleCompassCollapse() {
+    compassCollapsed = !compassCollapsed;
+    const compassHud = document.getElementById('compassHud');
+    const collapseBtn = compassHud.querySelector('.collapse-btn');
+    
+    if (compassCollapsed) {
+        compassHud.classList.add('collapsed');
+        collapseBtn.textContent = '+';
+        collapseBtn.title = 'Развернуть компас';
+        
+        const target = getCurrentCompassTarget();
+        if (target) {
+            showNotification(`Путь к ${target.name} отмечен на карте`, 2000);
+        }
+    } else {
+        compassHud.classList.remove('collapsed');
+        collapseBtn.textContent = '−';
+        collapseBtn.title = 'Свернуть компас';
+    }
+    
+    draw();
+    saveUISettings();
+}
+
+function toggleMapCollapse() {
+    mapCollapsed = !mapCollapsed;
+    const miniMap = document.getElementById('miniMap');
+    const collapseBtn = miniMap.querySelector('.collapse-btn');
+    
+    if (mapCollapsed) {
+        miniMap.classList.add('collapsed');
+        collapseBtn.textContent = '+';
+        collapseBtn.title = 'Развернуть карту';
+    } else {
+        miniMap.classList.remove('collapsed');
+        collapseBtn.textContent = '−';
+        collapseBtn.title = 'Свернуть карту';
+    }
+    
+    saveUISettings();
+}
+
+function getCurrentCompassTarget() {
+    let targetX, targetY, targetName, targetType;
+    
+    switch(config.compassTarget) {
+        case 'exit':
+            if (game.player.floor === game.exit.floor) {
+                return { x: game.exit.x, y: game.exit.y, name: 'Выход', type: 'exit' };
+            } else {
+                const stairsToExit = game.stairs.filter(s => 
+                    s.floor === game.player.floor && 
+                    s.direction === 'up'
+                );
+                if (stairsToExit.length > 0) {
+                    return { 
+                        x: stairsToExit[0].x, 
+                        y: stairsToExit[0].y, 
+                        name: 'Лестница к выходу', 
+                        type: 'stairs' 
+                    };
+                }
+            }
+            break;
+            
+        case 'map':
+            const mapTarget = findNearestItem('map');
+            if (mapTarget) {
+                targetX = mapTarget.x;
+                targetY = mapTarget.y;
+                targetName = mapTarget.name;
+                targetType = mapTarget.type;
+            } else {
+                compassDirection.style.display = 'none';
+                showNotification('Карта не найдена на всех этажах', 2000);
+                return;
+            }
+            break;
+            
+        case 'stairs':
+            const stairsOnFloor = game.stairs.filter(s => s.floor === game.player.floor);
+            if (stairsOnFloor.length > 0) {
+                return {
+                    x: stairsOnFloor[0].x,
+                    y: stairsOnFloor[0].y,
+                    name: 'Лестница',
+                    type: 'stairs'
+                };
+            }
+            break;
+            
+        case 'weapon':
+            const weaponsOnFloor = game.items.filter(i => 
+                i.floor === game.player.floor && 
+                !i.collected && 
+                i.isWeapon
+            );
+            if (weaponsOnFloor.length > 0) {
+                const weapon = weaponsOnFloor[0];
+                return {
+                    x: weapon.x,
+                    y: weapon.y,
+                    name: 'Оружие',
+                    type: 'item'
+                };
+            }
+            break;
+            
+        case 'potion':
+            const potionsOnFloor = game.items.filter(i => 
+                i.floor === game.player.floor && 
+                !i.collected && 
+                (i.type.type === 'heal' || i.type.type === 'buff')
+            );
+            if (potionsOnFloor.length > 0) {
+                const potion = potionsOnFloor[0];
+                return {
+                    x: potion.x,
+                    y: potion.y,
+                    name: 'Зелье',
+                    type: 'item'
+                };
+            }
+            break;
+            
+        case 'treasure':
+            const treasuresOnFloor = game.items.filter(i => 
+                i.floor === game.player.floor && 
+                !i.collected && 
+                i.type.type === 'treasure'
+            );
+            if (treasuresOnFloor.length > 0) {
+                const treasure = treasuresOnFloor[0];
+                return {
+                    x: treasure.x,
+                    y: treasure.y,
+                    name: 'Сокровище',
+                    type: 'item'
+                };
+            }
+            break;
+    }
+    
+    return null;
+}
+
+// ===============================
+// ФУНКЦИИ ОТРИСОВКИ
+// ===============================
+
+function draw() {
+    drawMaze();
+    drawEnemyHealthBars();
+    updateUI();
+}
+
+function drawMaze() {
+    const level = game.levels[game.player.floor];
+    if (!level) return;
+    
+    const cellSize = config.cellSize;
+    const theme = themes[config.currentTheme];
+    const visibleDistance = config.fogDistance + config.buffs.speed.value;
+    
+    ctx.fillStyle = theme.bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (compassCollapsed && config.showCompass && game.hasCompass) {
+        const targetInfo = getCurrentCompassTarget();
+        if (targetInfo) {
+            drawCompassLine(targetInfo.x, targetInfo.y, targetInfo.type);
+        }
+    }
+    
+    for (let y = 0; y < config.levelSize; y++) {
+        for (let x = 0; x < config.levelSize; x++) {
+            if (level[y][x] === 1) {
+                const roomKey = `${game.player.floor}:${x}:${y}`;
+                const isDiscovered = game.discoveredRooms.has(roomKey);
+                
+                if (!game.hasMap && !isDiscovered) continue;
+                
+                const distance = Math.sqrt(
+                    Math.pow(x - game.player.x, 2) + 
+                    Math.pow(y - game.player.y, 2)
+                );
+                
+                const alpha = game.hasMap ? 1 : Math.max(0.3, 1 - distance / visibleDistance);
+                const screenPos = toScreen(x, y);
+                const left = screenPos.x;
+                const top = screenPos.y;
+                const right = left + cellSize;
+                const bottom = top + cellSize;
+                
+                ctx.fillStyle = theme.floorColor;
+                ctx.globalAlpha = alpha;
+                ctx.fillRect(left, top, cellSize, cellSize);
+                
+                ctx.fillStyle = theme.floorPattern;
+                ctx.globalAlpha = alpha * 0.2;
+                for (let i = 0; i < 4; i++) {
+                    const ox = random.int(0, 3);
+                    const oy = random.int(0, 3);
+                    ctx.fillRect(left + ox, top + oy, 2, 2);
+                }
+                ctx.globalAlpha = alpha;
+                
+                const gradient = ctx.createRadialGradient(
+                    left + cellSize/2, top + cellSize/2, 0,
+                    left + cellSize/2, top + cellSize/2, cellSize/2
+                );
+                gradient.addColorStop(0, theme.lightColor);
+                gradient.addColorStop(1, 'transparent');
+                ctx.fillStyle = gradient;
+                ctx.globalAlpha = alpha * 0.5;
+                ctx.fillRect(left, top, cellSize, cellSize);
+                ctx.globalAlpha = alpha;
+                
+                ctx.strokeStyle = theme.wallColor;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                
+                const hasNorth = y > 0 && level[y-1][x] === 1;
+                const hasSouth = y < config.levelSize-1 && level[y+1][x] === 1;
+                const hasWest = x > 0 && level[y][x-1] === 1;
+                const hasEast = x < config.levelSize-1 && level[y][x+1] === 1;
+                
+                if (!hasNorth) {
+                    ctx.beginPath();
+                    ctx.moveTo(left, top);
+                    ctx.lineTo(right, top);
+                    ctx.stroke();
+                }
+                
+                if (!hasSouth) {
+                    ctx.beginPath();
+                    ctx.moveTo(left, bottom);
+                    ctx.lineTo(right, bottom);
+                    ctx.stroke();
+                }
+                
+                if (!hasWest) {
+                    ctx.beginPath();
+                    ctx.moveTo(left, top);
+                    ctx.lineTo(left, bottom);
+                    ctx.stroke();
+                }
+                
+                if (!hasEast) {
+                    ctx.beginPath();
+                    ctx.moveTo(right, top);
+                    ctx.lineTo(right, bottom);
+                    ctx.stroke();
+                }
+                
+                ctx.strokeStyle = theme.wallShadow;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                
+                if (hasNorth) {
+                    ctx.beginPath();
+                    ctx.moveTo(left, top);
+                    ctx.lineTo(right, top);
+                    ctx.stroke();
+                }
+                if (hasSouth) {
+                    ctx.beginPath();
+                    ctx.moveTo(left, bottom);
+                    ctx.lineTo(right, bottom);
+                    ctx.stroke();
+                }
+                if (hasWest) {
+                    ctx.beginPath();
+                    ctx.moveTo(left, top);
+                    ctx.lineTo(left, bottom);
+                    ctx.stroke();
+                }
+                if (hasEast) {
+                    ctx.beginPath();
+                    ctx.moveTo(right, top);
+                    ctx.lineTo(right, bottom);
+                    ctx.stroke();
+                }
+                
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+                
+                drawRoomObjects(x, y, screenPos, alpha);
+            }
+        }
+    }
+    
+    if (game.player.floor === game.exit.floor) {
+        const pos = toScreen(game.exit.x, game.exit.y);
+        drawExit(pos);
+    }
+    
+    const playerPos = toScreen(game.player.x, game.player.y);
+    drawPlayer(playerPos);
+    
+    drawDamageNumbers();
+}
+
+function drawRoomObjects(x, y, screenPos, alpha) {
+    const cellSize = config.cellSize;
+    const left = screenPos.x;
+    const top = screenPos.y;
+    
+    const stairs = getStairsAt(x, y, game.player.floor);
+    if (stairs) {
+        ctx.globalAlpha = alpha;
+        ctx.font = `${cellSize * 0.7}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = stairs.direction === 'up' ? '#64ff64' : '#ff6464';
+        ctx.fillText(stairs.direction === 'up' ? '↑' : '↓', 
+            left + cellSize/2, top + cellSize/2);
+        ctx.globalAlpha = 1;
+    }
+    
+    const teleport = getTeleportAt(x, y, game.player.floor);
+    if (teleport) {
+        ctx.globalAlpha = alpha;
+        ctx.font = `${cellSize * 0.6}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = teleport.used ? '#666' : '#64b4ff';
+        ctx.fillText('🌀', left + cellSize/2, top + cellSize/2);
+        ctx.globalAlpha = 1;
+    }
+    
+    const enemy = getEnemyAt(x, y, game.player.floor);
+    if (enemy && enemy.health > 0) {
+        ctx.globalAlpha = alpha;
+        
+        ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
+        ctx.fillRect(left + 4, top + 4, cellSize - 8, cellSize - 8);
+        
+        ctx.font = `${cellSize * 0.7}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = game.selectedEnemy === enemy.id ? '#ffff00' : enemy.type.color;
+        ctx.fillText(enemy.type.symbol, left + cellSize/2, top + cellSize/2);
+        
+        if (enemy.health < enemy.maxHealth) {
+            const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(left + 8, top + 8, cellSize - 16, 4);
+            ctx.fillStyle = healthPercent > 50 ? '#44ff44' : healthPercent > 25 ? '#ffaa00' : '#ff4444';
+            ctx.fillRect(left + 8, top + 8, (cellSize - 16) * healthPercent / 100, 4);
+        }
+        
+        ctx.globalAlpha = 1;
+    }
+    
+    const item = getItemAt(x, y, game.player.floor);
+    if (item) {
+        ctx.globalAlpha = alpha;
+        ctx.font = `${cellSize * 0.7}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = item.isWeapon ? item.type.color : item.type.color;
+        ctx.fillText(item.type.symbol, left + cellSize/2, top + cellSize/2);
+        ctx.globalAlpha = 1;
+    }
+}
+
+function drawExit(pos) {
+    const cellSize = config.cellSize;
+    const left = pos.x;
+    const top = pos.y;
+    
+    const time = Date.now() * 0.001;
+    const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+    
+    ctx.fillStyle = `rgba(255, 100, 100, ${0.3 * pulse})`;
+    ctx.fillRect(left + 4, top + 4, cellSize - 8, cellSize - 8);
+    
+    ctx.font = `${cellSize * 0.7}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = `rgb(255, ${100 + pulse * 155}, ${100 + pulse * 155})`;
+    ctx.fillText('🚪', left + cellSize/2, top + cellSize/2);
+}
+
+function drawPlayer(pos) {
+    const cellSize = config.cellSize;
+    const left = pos.x;
+    const top = pos.y;
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(left + cellSize/2, top + cellSize/2 + 3, 
+        cellSize/3, cellSize/6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#4a8aff';
+    ctx.beginPath();
+    ctx.arc(left + cellSize/2, top + cellSize/2, cellSize/3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#ffddaa';
+    ctx.beginPath();
+    ctx.arc(left + cellSize/2, top + cellSize/2 - 5, cellSize/4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(left + cellSize/2 - 4, top + cellSize/2 - 6, 2, 0, Math.PI * 2);
+    ctx.arc(left + cellSize/2 + 4, top + cellSize/2 - 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    const weapon = game.inventory[game.activeWeapon];
+    if (weapon) {
+        ctx.font = `${cellSize * 0.5}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = weapon.color;
+        ctx.fillText(weapon.symbol, left + cellSize/2, top + cellSize/2 + 5);
+    }
+}
+
+function drawEnemyHealthBars() {
+    if (!isCombatLocked || !currentCombatEnemy) return;
+    
+    const enemy = currentCombatEnemy;
+    const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+    
+    const healthBar = document.querySelector('.health-bar');
+    if (!healthBar) return;
+    
+    const rect = healthBar.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const barX = rect.left - canvasRect.left;
+    const barY = rect.top - canvasRect.top - 50;
+    
+    const barWidth = rect.width;
+    const barHeight = 20;
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(barX - 5, barY - 5, barWidth + 10, barHeight + 25);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`⚔️ ${enemy.type.name}:`, barX, barY);
+    
+    ctx.fillStyle = 'rgba(255, 50, 50, 0.3)';
+    ctx.fillRect(barX, barY + 20, barWidth, barHeight);
+    
+    if (healthPercent > 70) {
+        ctx.fillStyle = '#44ff44';
+    } else if (healthPercent > 30) {
+        ctx.fillStyle = '#ffaa44';
+    } else {
+        ctx.fillStyle = '#ff4444';
+    }
+    
+    ctx.fillRect(barX, barY + 20, barWidth * healthPercent / 100, barHeight);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(
+        `${Math.floor(enemy.health)}/${enemy.maxHealth}`,
+        barX + barWidth/2,
+        barY + 20 + barHeight/2
+    );
+    
+    if (isCombatLocked) {
+        const pulse = Math.sin(Date.now() * 0.005) * 0.2 + 0.8;
+        ctx.globalAlpha = pulse * 0.3;
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX - 3, barY - 3, barWidth + 6, barHeight + 28);
+        ctx.globalAlpha = 1;
+    }
+}
+
+function drawDamageNumbers() {
+    for (let i = game.damageNumbers.length - 1; i >= 0; i--) {
+        const num = game.damageNumbers[i];
+        
+        if (num.particles) {
+            const progress = num.lifetime / num.maxLifetime;
+            
+            for (const particle of num.particles) {
+                const pos = toScreen(particle.x, particle.y);
+                const particleProgress = particle.lifetime / 1000;
+                
+                if (particleProgress <= 0) continue;
+                
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.globalAlpha = particleProgress;
+                ctx.fillStyle = '#ffd700';
+                ctx.fillText('🪙', 
+                    pos.x + config.cellSize/2 + particle.dx * (1 - particleProgress) * 100,
+                    pos.y + config.cellSize/2 + particle.dy * (1 - particleProgress) * 100);
+                ctx.globalAlpha = 1;
+                
+                particle.x += particle.dx;
+                particle.y += particle.dy;
+                particle.dy += 0.01;
+                particle.lifetime -= 16;
+            }
+            
+            num.lifetime -= 16;
+            
+            if (num.lifetime <= 0) {
+                game.damageNumbers.splice(i, 1);
+            }
+        } else {
+            const pos = toScreen(num.x, num.y);
+            
+            const progress = num.lifetime / num.maxLifetime;
+            const yOffset = (1 - progress) * 50;
+            
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = progress;
+            
+            if (num.isCritical) {
+                ctx.fillStyle = '#ff4444';
+                ctx.shadowColor = '#ffaa00';
+                ctx.shadowBlur = 10;
+            } else if (num.isPlayer) {
+                ctx.fillStyle = '#ff4444';
+            } else {
+                ctx.fillStyle = '#ffff00';
+            }
+            
+            ctx.fillText(num.value, 
+                pos.x + config.cellSize/2, 
+                pos.y + config.cellSize/2 - yOffset);
+            
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+            
+            num.lifetime -= 16;
+            
+            if (num.lifetime <= 0) {
+                game.damageNumbers.splice(i, 1);
+            }
+        }
+    }
+}
+
+function drawCompassLine(targetX, targetY, targetType = 'item') {
+    const startPos = toScreen(game.player.x, game.player.y);
+    const endPos = toScreen(targetX, targetY);
+    
+    const startX = startPos.x + config.cellSize/2;
+    const startY = startPos.y + config.cellSize/2;
+    const endX = endPos.x + config.cellSize/2;
+    const endY = endPos.y + config.cellSize/2;
+    
+    let lineColor = '#ffff00';
+    switch(targetType) {
+        case 'exit': lineColor = '#ff6464'; break;
+        case 'stairs': lineColor = '#64ff64'; break;
+        case 'map': lineColor = '#8a8aff'; break;
+        case 'schematic': lineColor = '#44ff44'; break;
+        case 'item': lineColor = '#ffb464'; break;    
+    }
+    
+    const lineWidth = compassCollapsed ? 4 : 3;
+    const dashPattern = compassCollapsed ? [15, 8] : [8, 4];
+    
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(dashPattern);
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    ctx.fillStyle = lineColor;
+    ctx.beginPath();
+    ctx.arc(endX, endY, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    const progress = (Date.now() % 2000) / 2000;
+    const pointX = startX + (endX - startX) * progress;
+    const pointY = startY + (endY - startY) * progress;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(pointX, pointY, compassCollapsed ? 6 : 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (compassCollapsed) {
+        ctx.fillStyle = lineColor;
+        ctx.beginPath();
+        ctx.arc(endX, endY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(endX, endY, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        const time = Date.now() * 0.001;
+        const pulse = Math.sin(time * 3) * 0.5 + 0.5;
+        
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = pulse * 0.7;
+        ctx.beginPath();
+        ctx.arc(endX, endY, 10 + pulse * 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    } else {
+        ctx.fillStyle = lineColor;
+        ctx.beginPath();
+        ctx.arc(endX, endY, 6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// ===============================
+// ФУНКЦИИ ИНТЕРФЕЙСА
+// ===============================
+
+function updateUI() {
+    levelIndicator.textContent = `ЭТАЖ ${game.player.floor + 1}`;
+    stepsCounter.textContent = `Шагов: ${game.steps}`;
+    updateDamageInfo();
+    
+    const goldIndicator = document.getElementById('goldIndicator');
+    if (goldIndicator) {
+        goldIndicator.textContent = `🪙 ${game.gold}`;
+    }
+    
+    const exitFloor = game.exit.floor + 1;
+    if (game.player.floor < game.exit.floor) {
+        exitInfo.textContent = `Выход: этаж ${exitFloor}`;
+    } else if (game.player.floor === game.exit.floor) {
+        exitInfo.textContent = `Выход на этом этаже!`;
+    } else {
+        exitInfo.textContent = `Выход: этаж ${exitFloor}`;
+    }
+    
+    const healthPercent = (config.playerHealth / config.playerMaxHealth) * 100;
+    healthFill.style.width = `${healthPercent}%`;
+    
+    let healthTextString = `${config.playerHealth}/${config.playerMaxHealth}`;
+    if (config.killStreak > 1) {
+        healthTextString += ` (x${config.killStreak})`;
+    }
+    healthText.textContent = healthTextString;
+    
+    if (healthPercent > 70) {
+        healthFill.style.background = 'linear-gradient(to right, #44ff44, #88ff88)';
+    } else if (healthPercent > 30) {
+        healthFill.style.background = 'linear-gradient(to right, #ffaa44, #ffcc44)';
+    } else {
+        healthFill.style.background = 'linear-gradient(to right, #ff4444, #ff8888)';
+    }
+    
+    updateStatsDisplay();
+}
+
+function updateStatsDisplay() {
+    const statsElement = document.getElementById('statsInfo');
+    if (!statsElement) {
+        const statsDiv = document.createElement('div');
+        statsDiv.id = 'statsInfo';
+        statsDiv.className = 'stats-info';
+        statsDiv.style.cssText = 'font-size: 12px; color: #ffd700; margin-left: 10px;';
+        document.querySelector('.top-panel').appendChild(statsDiv);
+    }
+    
+    document.getElementById('statsInfo').textContent = 
+        `Ур.${config.playerLevel} | 🪙${game.gold} | Уб.${game.totalKills}`;
+}
+
+function updateInventoryDisplay() {
+    inventory.innerHTML = '';
+    
+    for (let i = 0; i < game.inventory.length; i++) {
+        const slot = document.createElement('div');
+        slot.className = `inventory-slot ${i === game.activeWeapon ? 'active' : ''}`;
+        
+        if (game.inventory[i]) {
+            slot.textContent = game.inventory[i].symbol;
+            slot.style.color = game.inventory[i].color;
+            
+            let title = `${game.inventory[i].name}\nУрон: ${game.inventory[i].damage}`;
+            if (game.inventory[i].name === 'Лук') {
+                title += `\nДальность: ${game.inventory[i].range} клеток`;
+                if (playerArrows > 0) {
+                    title += `\nСтрелы: ${playerArrows}`;
+                } else {
+                    title += '\nНет стрел!';
+                }
+            }
+            slot.title = title;
+        } else {
+            slot.textContent = '+';
+            slot.style.color = '#666';
+            slot.title = `Пустой слот ${i+1}`;
+        }
+        
+        slot.addEventListener('click', () => {
+            if (game.inventory[i]) {
+                game.activeWeapon = i;
+                updateInventoryDisplay();
+                draw();
+                
+                if (game.inventory[i].name === 'Лук') {
+                    showNotification(`Лук выбран. Стрелы: ${playerArrows}`, 1500);
+                }
+            }
+        });
+        
+        inventory.appendChild(slot);
+    }
+    
+    if (activeTorch && torchUses > 0) {
+        const torchSlot = document.createElement('div');
+        torchSlot.className = 'inventory-slot';
+        torchSlot.style.cssText = `
+            background: linear-gradient(to bottom, #4a2a00, #2a1a00);
+            border-color: #ff8a00;
+            position: relative;
+            cursor: pointer;
+        `;
+        
+        const counter = document.createElement('div');
+        counter.style.cssText = `
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 10px;
+            color: #ffcc00;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 3px;
+            padding: 1px 3px;
+            min-width: 12px;
+            text-align: center;
+        `;
+        counter.textContent = torchUses;
+        
+        torchSlot.innerHTML = `<div style="font-size: 22px; margin-top: 5px;">${activeTorch.symbol}</div>`;
+        torchSlot.appendChild(counter);
+        torchSlot.title = `${activeTorch.name}\nИспользований: ${torchUses}/${activeTorch.value}\nКликните для использования`;
+        
+        torchSlot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            activateTorch();
+        });
+        
+        inventory.appendChild(torchSlot);
+    }
+    
+    if (playerArrows > 0) {
+        const arrowIndicator = document.createElement('div');
+        arrowIndicator.className = 'inventory-slot';
+        arrowIndicator.style.cssText = `
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border-color: #8a8aff;
+            position: relative;
+            font-size: 14px;
+        `;
+        arrowIndicator.innerHTML = `
+            <div style="font-size: 16px;">➹</div>
+            <div style="font-size: 10px; position: absolute; bottom: 3px; right: 3px;">${playerArrows}</div>
+        `;
+        arrowIndicator.title = `Стрелы: ${playerArrows}`;
+        
+        inventory.appendChild(arrowIndicator);
+    }
+    
+    updateDamageInfo();
+}
+
+function updateMiniMap() {
+    const shouldShow = (game.hasMap && config.showMap) || (game.hasSchematic && config.showSchematic);
+    
+    if (!shouldShow) {
+        miniMap.style.display = 'none';
+        return;
+    }
+    
+    miniMap.style.display = 'block';
+    
+    if (!miniMap.querySelector('.collapse-btn')) {
+        const collapseBtn = document.createElement('div');
+        collapseBtn.className = 'collapse-btn';
+        collapseBtn.textContent = mapCollapsed ? '+' : '−';
+        collapseBtn.onclick = toggleMapCollapse;
+        collapseBtn.title = mapCollapsed ? 'Развернуть карту' : 'Свернуть карту';
+        miniMap.insertBefore(collapseBtn, miniMap.firstChild);
+    }
+    
+    if (mapCollapsed) {
+        return;
+    }
+    
+    const floor = game.player.floor;
+    const level = game.levels[floor];
+    const cellSize = 5;
+    
+    let html = `<div style="color:#8a8aff; font-size:12px; margin-bottom:5px; text-align:center;">`;
+    if (game.hasMap) {
+        html += `Карта этажа ${floor + 1}`;
+    } else {
+        html += `Схема этажа ${floor + 1}`;
+    }
+    html += `</div>`;
+    html += `<div class="map-grid" style="grid-template-columns: repeat(${config.levelSize}, ${cellSize}px);">`;
+    
+    for (let y = 0; y < config.levelSize; y++) {
+        for (let x = 0; x < config.levelSize; x++) {
+            if (level[y][x] === 1) {
+                const roomKey = `${floor}:${x}:${y}`;
+                let color = '#2a2a4a';
+                
+                const isVisible = game.hasMap || game.discoveredRooms.has(roomKey);
+                
+                if (isVisible) {
+                    color = '#4a4a6a';
+                    
+                    if (x === game.player.x && y === game.player.y) {
+                        color = '#8a8aff';
+                    } else if (x === game.exit.x && y === game.exit.y && floor === game.exit.floor) {
+                        color = '#ff6464';
+                    } else if (getStairsAt(x, y, floor)) {
+                        const stairs = getStairsAt(x, y, floor);
+                        color = stairs.direction === 'up' ? '#64ff64' : '#ff6464';
+                    } else if (getTeleportAt(x, y, floor)) {
+                        color = '#64b4ff';
+                    } else if (getItemAt(x, y, floor) && getItemAt(x, y, floor).type.type === 'map') {
+                        color = '#8a8aff';
+                    } else if (getItemAt(x, y, floor) && getItemAt(x, y, floor).type.type === 'schematic') {
+                        color = '#44ff44';
+                    } else if (getItemAt(x, y, floor) && getItemAt(x, y, floor).type.type === 'compass') {
+                        color = '#ffdd00';
+                    } else if (getEnemyAt(x, y, floor)) {
+                        color = '#ff4444';
+                    } else if (getItemAt(x, y, floor)) {
+                        const item = getItemAt(x, y, floor);
+                        if (item.type.type === 'treasure') {
+                            color = '#ffdd00';
+                        } else {
+                            color = '#ffb464';
+                        }
+                    }
+                }
+                
+                html += `<div class="map-cell" style="background:${color};" title="${x},${y}"></div>`;
+            } else {
+                html += `<div class="map-cell" style="background:#1a1a2a;"></div>`;
+            }
+        }
+    }
+    
+    html += '</div>';
+    miniMap.innerHTML = html;
+    
+    const collapseBtn = document.createElement('div');
+    collapseBtn.className = 'collapse-btn';
+    collapseBtn.textContent = mapCollapsed ? '+' : '−';
+    collapseBtn.onclick = toggleMapCollapse;
+    collapseBtn.title = mapCollapsed ? 'Развернуть карту' : 'Свернуть карту';
+    miniMap.insertBefore(collapseBtn, miniMap.firstChild);
+}
+
+function updateCompass() {
+    if (!config.showCompass || !game.hasCompass) {
+        compassHud.style.display = 'none';
+        return;
+    }
+    
+    compassHud.style.display = 'flex';
+    
+    if (compassCollapsed) {
+        return;
+    }
+    
+    let targetX, targetY, targetName;
+    let targetType = 'item';
+    
+    switch(config.compassTarget) {
+        case 'exit':
+            if (game.player.floor === game.exit.floor) {
+                targetX = game.exit.x;
+                targetY = game.exit.y;
+                targetName = 'Выход';
+                targetType = 'exit';
+            } else {
+                const stairsToExit = game.stairs.filter(s => 
+                    s.floor === game.player.floor && 
+                    s.direction === 'up'
+                );
+                
+                if (stairsToExit.length > 0) {
+                    targetX = stairsToExit[0].x;
+                    targetY = stairsToExit[0].y;
+                    targetName = 'Лестница к выходу';
+                    targetType = 'stairs';
+                } else {
+                    compassDirection.style.display = 'none';
+                    return;
+                }
+            }
+            break;
+            
+        case 'stairs':
+            const stairsOnFloor = game.stairs.filter(s => s.floor === game.player.floor);
+            if (stairsOnFloor.length > 0) {
+                targetX = stairsOnFloor[0].x;
+                targetY = stairsOnFloor[0].y;
+                targetName = 'Лестница';
+                targetType = 'stairs';
+            } else {
+                compassDirection.style.display = 'none';
+                return;
+            }
+            break;
+            
+        case 'weapon':
+            const weaponsOnFloor = game.items.filter(i => 
+                i.floor === game.player.floor && 
+                !i.collected && 
+                i.isWeapon
+            );
+            if (weaponsOnFloor.length > 0) {
+                targetX = weaponsOnFloor[0].x;
+                targetY = weaponsOnFloor[0].y;
+                targetName = 'Оружие';
+                targetType = 'item';
+            } else {
+                compassDirection.style.display = 'none';
+                return;
+            }
+            break;
+            
+        case 'potion':
+            const potionsOnFloor = game.items.filter(i => 
+                i.floor === game.player.floor && 
+                !i.collected && 
+                (i.type.type === 'heal' || i.type.type === 'buff')
+            );
+            if (potionsOnFloor.length > 0) {
+                targetX = potionsOnFloor[0].x;
+                targetY = potionsOnFloor[0].y;
+                targetName = 'Зелье';
+                targetType = 'item';
+            } else {
+                compassDirection.style.display = 'none';
+                return;
+            }
+            break;
+            
+        case 'treasure':
+            const treasuresOnFloor = game.items.filter(i => 
+                i.floor === game.player.floor && 
+                !i.collected && 
+                i.type.type === 'treasure'
+            );
+            if (treasuresOnFloor.length > 0) {
+                targetX = treasuresOnFloor[0].x;
+                targetY = treasuresOnFloor[0].y;
+                targetName = 'Сокровище';
+                targetType = 'item';
+            } else {
+                compassDirection.style.display = 'none';
+                return;
+            }
+            break;
+            
+        case 'map':
+            const mapTarget = findNearestMap();
+            if (mapTarget) {
+                targetX = mapTarget.x;
+                targetY = mapTarget.y;
+                targetName = mapTarget.name;
+                targetType = mapTarget.type;
+            } else {
+                compassDirection.style.display = 'none';
+                showNotification('Карта не найдена на всех этажах', 2000);
+                return;
+            }
+            break;
+    }
+    
+    const dx = targetX - game.player.x;
+    const dy = targetY - game.player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    let arrow = '';
+    
+    if (angle >= -22.5 && angle < 22.5) arrow = '→';
+    else if (angle >= 22.5 && angle < 67.5) arrow = '↘';
+    else if (angle >= 67.5 && angle < 112.5) arrow = '↓';
+    else if (angle >= 112.5 && angle < 157.5) arrow = '↙';
+    else if (angle >= 157.5 || angle < -157.5) arrow = '←';
+    else if (angle >= -157.5 && angle < -112.5) arrow = '↖';
+    else if (angle >= -112.5 && angle < -67.5) arrow = '↑';
+    else if (angle >= -67.5 && angle < -22.5) arrow = '↗';
+    
+    compassArrow.textContent = arrow;
+    compassDistance.textContent = `${Math.floor(distance)} шагов`;
+    compassDirection.style.display = 'flex';
+    
+    if (config.showMap && game.hasMap) {
+        drawCompassLine(targetX, targetY, targetType);
+    }
+}
+
+function setupCompassControls() {
+    document.querySelectorAll('.compass-target').forEach(target => {
+        target.addEventListener('click', function() {
+            document.querySelectorAll('.compass-target').forEach(t => {
+                t.classList.remove('active');
+            });
+
+            
+            this.classList.add('active');
+            
+            config.compassTarget = this.dataset.target;
+            
+            if (config.compassTarget === 'map' && game.hasMap) {
+                const confirmSwitch = confirm('У вас уже есть карта. Хотите найти еще одну карту (для другого этажа)?');
+                if (!confirmSwitch) {
+                    config.compassTarget = 'exit';
+                    this.classList.remove('active');
+                    document.querySelector('.compass-target[data-target="exit"]').classList.add('active');
+                }
+            }
+            
+            updateCompass();
+            draw();
+            
+            showNotification(`Компас направлен на: ${this.textContent}`, 1500);
+        });
+    });
+}
+
+function toggleCompass() {
+    if (!game.hasCompass) {
+        showNotification('У вас нет компаса! Найдите его в лабиринте.', 2000);
+        return;
+    }
+    
+    config.showCompass = !config.showCompass;
+    updateCompass();
+    draw();
+    saveUISettings();
+}
+
+function toggleMap() {
+    if (!game.hasMap) {
+        showNotification('У вас нет карты! Найдите её в лабиринте.', 2000);
+        return;
+    }
+    
+    config.showMap = !config.showMap;
+    updateMiniMap();
+    draw();
+    saveUISettings();
+    
+    showNotification(config.showMap ? 'Карта включена' : 'Карта выключена', 1500);
+}
+
+function toggleAutoAttack() {
+    config.autoAttack = !config.autoAttack;
+    saveUISettings();
+    
+    if (!config.autoAttack && isCombatLocked) {
+        endCombat();
+    }
+    
+    showNotification(config.autoAttack ? 'Автоатака включена!' : 'Автоатака выключена', 1500);
+}
+
+function toggleMenu() {
+    menuOverlay.style.display = menuOverlay.style.display === 'flex' ? 'none' : 'flex';
+    updateBackButton();
+}
+
+function showStats() {
+    const statsHTML = `
+        <div style="color:#8a8aff; font-weight:bold; margin-bottom:15px; font-size:18px;">СТАТИСТИКА</div>
+        <div style="text-align: left; font-size: 15px; line-height: 1.8;">
+        <div style="color:#ffd700;">👤 ИГРОК:</div>
+        • Уровень: <b>${config.playerLevel}</b><br>
+        • Опыт: ${config.playerXP}/${config.xpToNextLevel}<br>
+        • Здоровье: ${config.playerHealth}/${config.playerMaxHealth}<br>
+        • Золото: <b>${game.gold}🪙</b><br><br>
+        
+        <div style="color:#ff4444;">⚔️ БОЕВАЯ:</div>
+        • Всего убийств: <b>${game.totalKills}</b><br>
+        • Макс. комбо: <b>${game.maxCombo}</b><br>
+        • Текущее комбо: <b>${config.killStreak}</b><br>
+        • Шанс крита: <b>${Math.round(config.critChance * 100)}%</b><br>
+        • Бонус опыта: <b>+${Math.round((config.xpMultiplier - 1) * 100)}%</b><br><br>
+        
+        <div style="color:#64ff64;">🏆 ДОСТИЖЕНИЯ:</div>
+        ${game.achievements.firstBlood ? '✅ Первая кровь' : '❌ Первая кровь'}<br>
+        ${game.achievements.comboMaster ? '✅ Мастер комбо' : '❌ Мастер комбо'}<br>
+        ${game.achievements.dragonSlayer ? '✅ Убийца драконов' : '❌ Убийца драконов'}<br>
+        ${game.achievements.flawlessVictory ? '✅ Безупречная победа' : '❌ Безупречная победа'}<br><br>
+        
+        <div style="color:#8a8aff;">📊 ПРОГРЕСС:</div>
+        • Пройдено шагов: ${game.steps}<br>
+        • Этаж: ${game.player.floor + 1}/${config.levels}<br>
+        • Выход найден: ${game.foundExit ? '✅' : '❌'}
+        </div>
+    `;
+    
+    notificationText.innerHTML = statsHTML;
+    notification.style.display = 'block';
+}
+
+function showInstructions() {
+    notificationText.innerHTML = `
+        <div style="color:#8a8aff; font-weight:bold; margin-bottom:15px; font-size:18px;">УПРАВЛЕНИЕ КЛАВИАТУРОЙ</div>
+        <div style="text-align: left; font-size: 15px; line-height: 1.6;">
+        <div style="margin-bottom:10px;"><b>ДВИЖЕНИЕ:</b></div>
+        • Стрелки или WASD - движение<br>
+        • Q/E или ↑↓ на лестницах - переход между этажами<br><br>
+        
+        <div style="margin-bottom:10px;"><b>БОЙ И ИНТЕРФЕЙС:</b></div>
+        • ПРОБЕЛ - атака ближайшего врага<br>
+        • 1-4 - выбор оружия в инвентаре<br>
+        • A (с Ctrl/Alt) - переключение автоатаки<br>
+        • H - скрыть/показать интерфейс<br>
+        • I - статистика<br>
+        • ESC/M - меню<br><br>
+        
+        <div style="margin-bottom:10px;"><b>ОСОБЫЕ ВОЗМОЖНОСТИ:</b></div>
+        • Находите 🗺️ Карту чтобы видеть весь этаж<br>
+        • Находите 🧭 Компас для навигации к целям<br>
+        • Автоатака срабатывает при подходе к врагам<br>
+        • Комбо-система: убивайте врагов быстро для бонусов<br><br>
+        
+        <div style="color:#64ff64; font-weight:bold;">Удачи в лабиринте!</div>
+        </div>
+    `;
+    notification.style.display = 'block';
+    toggleMenu();
+}
+
+function showNotification(text, duration = 2000) {
+    notificationText.textContent = text;
+    notification.style.display = 'block';
+    
+    if (duration > 0) {
+        setTimeout(hideNotification, duration);
+    }
+}
+
+function hideNotification() {
+    notification.style.display = 'none';
+}
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw();
+}
+
+// ===============================
+// ФУНКЦИИ ДЛЯ ФАКЕЛА И ЛУКА
+// ===============================
+
+function addToInventory(item) {
+    if (item.type === 'torch') {
+        if (!activeTorch) {
+            activeTorch = { ...item, uses: item.value };
+            torchUses = item.value;
+            showNotification(`Факел добавлен! Использований: ${torchUses}`, 2000);
+        } else {
+            activeTorch.uses += item.value;
+            torchUses = activeTorch.uses;
+            showNotification(`+${item.value} использований факела! Всего: ${torchUses}`, 2000);
+        }
+        updateInventoryDisplay();
+        return;
+    }
+    
+    if (item.type === 'ammo') {
+        playerArrows += item.value;
+        showNotification(`+${item.value} стрел! Всего: ${playerArrows}`, 2000);
+        updateInventoryDisplay();
+        return;
+    }
+}
+
+function activateTorch() {
+    if (!activeTorch || torchUses <= 0) {
+        showNotification('Нет факела или закончились использования!', 1500);
+        return false;
+    }
+    
+    torchUses--;
+    activeTorch.uses = torchUses;
+    
+    const directions = [
+        { dx: 0, dy: -1, name: 'север' },
+        { dx: 1, dy: 0, name: 'восток' },
+        { dx: 0, dy: 1, name: 'юг' },
+        { dx: -1, dy: 0, name: 'запад' }
+    ];
+    
+    let revealedCount = 0;
+    const floor = game.player.floor;
+    
+    directions.forEach(dir => {
+        let x = game.player.x + dir.dx;
+        let y = game.player.y + dir.dy;
+        
+        while (x >= 0 && x < config.levelSize && y >= 0 && y < config.levelSize) {
+            if (game.levels[floor][y][x] === 0) {
+                break;
+            }
+            
+            const roomKey = `${floor}:${x}:${y}`;
+            if (!game.discoveredRooms.has(roomKey)) {
+                game.discoveredRooms.add(roomKey);
+                revealedCount++;
+            }
+            
+            x += dir.dx;
+            y += dir.dy;
+        }
+    });
+    
+    createTorchEffect();
+    
+    showNotification(`Факел освещает путь! Открыто комнат: ${revealedCount}. Осталось использований: ${torchUses}`, 2000);
+    
+    updateInventoryDisplay();
+    saveUISettings();
+    saveGameToCloud();
+    
+    updateMiniMap();
+    draw();
+    
+    if (torchUses <= 0) {
+        activeTorch = null;
+        showNotification('Факел потух!', 1500);
+        updateInventoryDisplay();
+    }
+    
+    return true;
+}
+
+function createTorchEffect() {
+    const playerPos = toScreen(game.player.x, game.player.y);
+    const cellSize = config.cellSize;
+    
+    const torchBeam = document.createElement('div');
+    torchBeam.className = 'torch-beam';
+    torchBeam.style.cssText = `
+        left: ${playerPos.x}px;
+        top: ${playerPos.y}px;
+        width: ${cellSize}px;
+        height: ${cellSize}px;
+        background: radial-gradient(circle, rgba(255, 200, 100, 0.8) 0%, rgba(255, 150, 50, 0.4) 40%, transparent 70%);
+        border-radius: 50%;
+        animation: pulse 1s ease-in-out;
+    `;
+    
+    document.getElementById('gameContainer').appendChild(torchBeam);
+    
+    setTimeout(() => {
+        if (torchBeam.parentNode) {
+            torchBeam.parentNode.removeChild(torchBeam);
+        }
+    }, 1000);
+}
+
+function canRangedAttack() {
+    const weapon = game.inventory[game.activeWeapon];
+    return weapon && weapon.name === 'Лук' && playerArrows > 0;
+}
+
+function rangedAttack(targetX, targetY) {
+    if (!canRangedAttack()) {
+        showNotification('Нет лука или стрел!', 1500);
+        return false;
+    }
+    
+    const enemy = getEnemyAt(targetX, targetY, game.player.floor);
+    if (!enemy || enemy.health <= 0) {
+        showNotification('Нет цели для атаки!', 1500);
+        return false;
+    }
+    
+    if (!checkLineOfSight(game.player.x, game.player.y, targetX, targetY, game.player.floor)) {
+        showNotification('Нет прямой видимости цели!', 1500);
+        return false;
+    }
+    
+    const distance = Math.sqrt(
+        Math.pow(targetX - game.player.x, 2) + 
+        Math.pow(targetY - game.player.y, 2)
+    );
+    
+    const weapon = game.inventory[game.activeWeapon];
+    if (distance > weapon.range) {
+        showNotification(`Цель слишком далеко! Макс. дальность: ${weapon.range}`, 1500);
+        return false;
+    }
+    
+    playerArrows--;
+    
+    createArrowAnimation(game.player.x, game.player.y, targetX, targetY);
+    
+    setTimeout(() => {
+        attackEnemy(targetX, targetY);
+        showNotification(`Осталось стрел: ${playerArrows}`, 1500);
+    }, 400);
+    
+    return true;
+}
+
+function createArrowAnimation(startX, startY, endX, endY) {
+    const startPos = toScreen(startX, startY);
+    const endPos = toScreen(endX, endY);
+    
+    const arrow = document.createElement('div');
+    arrow.className = 'arrow-animation';
+    arrow.textContent = '➹';
+    arrow.style.cssText = `
+        left: ${startPos.x + config.cellSize/2}px;
+        top: ${startPos.y + config.cellSize/2}px;
+        color: #8a6642;
+        font-size: 20px;
+        --tx: ${endPos.x - startPos.x}px;
+        --ty: ${endPos.y - startPos.y}px;
+    `;
+    
+    document.getElementById('gameContainer').appendChild(arrow);
+    
+    setTimeout(() => {
+        if (arrow.parentNode) {
+            arrow.parentNode.removeChild(arrow);
+        }
+    }, 500);
+}
+
+function setupRangedAttackControls() {
+    canvas.addEventListener('click', (e) => {
+        if (game.foundExit) return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+        
+        const weapon = game.inventory[game.activeWeapon];
+        const isBowSelected = weapon && weapon.name === 'Лук';
+        
+        if (isBowSelected && playerArrows > 0) {
+            for (const enemy of game.enemies) {
+                if (enemy.floor === game.player.floor && enemy.health > 0) {
+                    const pos = toScreen(enemy.x, enemy.y);
+                    const centerX = pos.x + config.cellSize/2;
+                    const centerY = pos.y + config.cellSize/2;
+                    const distance = Math.sqrt(
+                        Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2)
+                    );
+                    
+                    if (distance < config.cellSize) {
+                        const enemyDistance = Math.sqrt(
+                            Math.pow(enemy.x - game.player.x, 2) + 
+                            Math.pow(enemy.y - game.player.y, 2)
+                        );
+                        
+                        if (enemyDistance <= weapon.range && 
+                            checkLineOfSight(game.player.x, game.player.y, enemy.x, enemy.y, game.player.floor)) {
+                            rangedAttack(enemy.x, enemy.y);
+                            return;
+                        } else if (enemyDistance > weapon.range) {
+                            showNotification('Враг слишком далеко!', 1500);
+                            return;
+                        } else {
+                            showNotification('Нет прямой видимости!', 1500);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (const enemy of game.enemies) {
+            if (enemy.floor === game.player.floor && enemy.health > 0) {
+                const pos = toScreen(enemy.x, enemy.y);
+                const centerX = pos.x + config.cellSize/2;
+                const centerY = pos.y + config.cellSize/2;
+                const distance = Math.sqrt(
+                    Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2)
+                );
+                
+                if (distance < config.cellSize/2) {
+                    game.selectedEnemy = enemy.id;
+                    attackEnemy(enemy.x, enemy.y);
+                    return;
+                }
+            }
+        }
+        
+        game.selectedEnemy = null;
+    });
+}
+
+// ===============================
+// ФУНКЦИИ ДЛЯ ТЕЛЕГРАМ ИНТЕГРАЦИИ
+// ===============================
+
+function updateBackButton() {
+    if (menuOverlay.style.display === 'flex' || shopOverlay.style.display === 'flex') {
+        tg.BackButton.show();
+    } else {
+        tg.BackButton.hide();
+    }
+}
+
+function setupTelegramIntegration() {
+    tg.BackButton.onClick(() => {
+        if (menuOverlay.style.display === 'flex') {
+            toggleMenu();
+        } else if (shopOverlay.style.display === 'flex') {
+            closeShop();
+        } else {
+            tg.close();
+        }
+    });
+
+    const originalToggleMenu = toggleMenu;
+    const originalOpenShop = openShop;
+    const originalCloseShop = closeShop;
+
+    window.toggleMenu = function() {
+        originalToggleMenu();
+        updateBackButton();
+    };
+
+    window.openShop = function() {
+        originalOpenShop();
+        tg.BackButton.show();
+    };
+
+    window.closeShop = function() {
+        originalCloseShop();
+        tg.BackButton.hide();
+    };
+
+    tg.MainButton.setText('МЕНЮ');
+    tg.MainButton.setParams({
+        color: '#8a8aff',
+        text_color: '#ffffff'
+    });
+    
+    tg.MainButton.onClick(() => {
+        if (menuOverlay.style.display === 'flex') {
+            toggleMenu();
+        } else if (shopOverlay.style.display === 'flex') {
+            closeShop();
+        } else {
+            toggleMenu();
+        }
+    });
+    
+    tg.MainButton.show();
+}
+
+// ===============================
+// ОБРАБОТЧИКИ СОБЫТИЙ
+// ===============================
+
+function fixMobileTap() {
+    console.log('Настройка тапов для мобильных...');
+    
+    canvas.addEventListener('touchend', function(e) {
+        if (game.foundExit) return;
+        
+        const touch = e.changedTouches[0];
+        const rect = canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        for (const enemy of game.enemies) {
+            if (enemy.floor === game.player.floor && enemy.health > 0) {
+                const pos = toScreen(enemy.x, enemy.y);
+                const enemyCenterX = pos.x + config.cellSize/2;
+                const enemyCenterY = pos.y + config.cellSize/2;
+                
+                if (Math.abs(x - enemyCenterX) < 30 && Math.abs(y - enemyCenterY) < 30) {
+                    console.log('Тап по врагу:', enemy.type.name);
+                    attackEnemy(enemy.x, enemy.y);
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+        
+        game.selectedEnemy = null;
+    }, { passive: false });
+    
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    
+    console.log('Тапы настроены');
+}
+
+function handleCanvasClick(e) {
+    if (game.foundExit) return;
+    
+    if (isCombatLocked && config.autoAttack) {
+        showNotification('Идет автобой!', 1500);
+        return;
+    }
+    
+    let clientX, clientY;
+    
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        const touch = e.type === 'touchstart' ? e.touches[0] : e.changedTouches[0];
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+        e.preventDefault();
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+    
+    const rect = canvas.getBoundingClientRect();
+    const clickX = clientX - rect.left;
+    const clickY = clientY - rect.top;
+    
+    const weapon = game.inventory[game.activeWeapon];
+    const isBowSelected = weapon && weapon.name === 'Лук';
+    
+    for (const enemy of game.enemies) {
+        if (enemy.floor === game.player.floor && enemy.health > 0) {
+            const pos = toScreen(enemy.x, enemy.y);
+            const centerX = pos.x + config.cellSize/2;
+            const centerY = pos.y + config.cellSize/2;
+            
+            const clickRadius = isBowSelected ? config.cellSize * 0.8 : config.cellSize * 0.5;
+            const distance = Math.sqrt(
+                Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2)
+            );
+            
+            if (distance < clickRadius) {
+                if (isBowSelected && playerArrows > 0) {
+                    const enemyDistance = Math.sqrt(
+                        Math.pow(enemy.x - game.player.x, 2) + 
+                        Math.pow(enemy.y - game.player.y, 2)
+                    );
+                    
+                    if (enemyDistance <= weapon.range && 
+                        checkLineOfSight(game.player.x, game.player.y, enemy.x, enemy.y, game.player.floor)) {
+                        rangedAttack(enemy.x, enemy.y);
+                        return;
+                    } else if (enemyDistance > weapon.range) {
+                        showNotification('Враг слишком далеко!', 1500);
+                        return;
+                    } else {
+                        showNotification('Нет прямой видимости!', 1500);
+                        return;
+                    }
+                } else {
+                    game.selectedEnemy = enemy.id;
+                    attackEnemy(enemy.x, enemy.y);
+                    return;
+                }
+            }
+        }
+    }
+    
+    game.selectedEnemy = null;
+}
+
+function handleMobileTap(e) {
+    if (game.foundExit) return;
+    
+    if (isCombatLocked && config.autoAttack) {
+        showNotification('Идет автобой!', 1500);
+        return;
+    }
+    
+    const touch = e.changedTouches[0];
+    const rect = canvas.getBoundingClientRect();
+    const tapX = touch.clientX - rect.left;
+    const tapY = touch.clientY - rect.top;
+    
+    for (const enemy of game.enemies) {
+        if (enemy.floor === game.player.floor && enemy.health > 0) {
+            const pos = toScreen(enemy.x, enemy.y);
+            const centerX = pos.x + config.cellSize/2;
+            const centerY = pos.y + config.cellSize/2;
+            const distance = Math.sqrt(
+                Math.pow(tapX - centerX, 2) + Math.pow(tapY - centerY, 2)
+            );
+            
+            if (distance < config.cellSize * 0.6) {
+                game.selectedEnemy = enemy.id;
+                attackEnemy(enemy.x, enemy.y);
+                
+                showTapFeedback(tapX, tapY);
+                return;
+            }
+        }
+    }
+    
+    game.selectedEnemy = null;
+}
+
+function showTapFeedback(x, y) {
+    const feedback = document.createElement('div');
+    feedback.style.cssText = `
+        position: absolute;
+        left: ${x - 15}px;
+        top: ${y - 15}px;
+        width: 30px;
+        height: 30px;
+        border: 3px solid #ff4444;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1000;
+        animation: tapPulse 0.5s ease-out;
+    `;
+    
+    document.getElementById('gameContainer').appendChild(feedback);
+    
+    setTimeout(() => {
+        if (feedback.parentNode) {
+            feedback.parentNode.removeChild(feedback);
+        }
+    }, 500);
+}
+
+function setupMobileTap() {
+    let tapStartTime = 0;
+    let tapStartX = 0;
+    let tapStartY = 0;
+    
+    canvas.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        tapStartTime = Date.now();
+        tapStartX = touch.clientX;
+        tapStartY = touch.clientY;
+        
+        if (e.touches.length === 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    canvas.addEventListener('touchend', (e) => {
+        if (game.foundExit) return;
+        
+        const touch = e.changedTouches[0];
+        const endTime = Date.now();
+        const endX = touch.clientX;
+        const endY = touch.clientY;
+        
+        const duration = endTime - tapStartTime;
+        const distance = Math.sqrt(
+            Math.pow(endX - tapStartX, 2) + Math.pow(endY - tapStartY, 2)
+        );
+        
+        if (duration < 300 && distance < 20) {
+            const clickEvent = new MouseEvent('click', {
+                clientX: endX,
+                clientY: endY,
+                bubbles: true
+            });
+            canvas.dispatchEvent(clickEvent);
+        }
+        
+        e.preventDefault();
+    }, { passive: false });
+}
+
+function setupCanvasInteractions() {
+    canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('touchend', handleCanvasClick);
+    
+    canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        return false;
+    });
+}
+
+function setupSwipeControls() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    
+    canvas.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+        e.preventDefault();
+    }, { passive: false });
+    
+    canvas.addEventListener('touchend', (e) => {
+        if (game.foundExit) return;
+        
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        const touchEndTime = Date.now();
+        
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+        const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+        const duration = touchEndTime - touchStartTime;
+        
+        if (distance > 30 && duration < 500) {
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 30) {
+                    movePlayer(1, 0);
+                } else if (diffX < -30) {
+                    movePlayer(-1, 0);
+                }
+            } else {
+                if (diffY > 30) {
+                    movePlayer(0, 1);
+                } else if (diffY < -30) {
+                    movePlayer(0, -1);
+                }
+            }
+        }
+        e.preventDefault();
+    }, { passive: false });
+}
+
+function setupKeyboardControls() {
+    document.addEventListener('keydown', (e) => {
+        if (game.foundExit) return;
+        
+        if ([16, 32, 37, 38, 39, 40, 65, 66, 68, 83, 87].includes(e.keyCode)) {
+            e.preventDefault();
+        }
+        
+        switch(e.key) {
+            case 'w': case 'W': case 'ц': case 'Ц': case 'ArrowUp':
+                movePlayer(0, -1);
+                break;
+                
+            case 's': case 'S': case 'ы': case 'Ы': case 'ArrowDown':
+                movePlayer(0, 1);
+                break;
+                
+            case 'a': case 'A': case 'ф': case 'Ф': case 'ArrowLeft':
+                movePlayer(-1, 0);
+                break;
+                
+            case 'd': case 'D': case 'в': case 'В': case 'ArrowRight':
+                movePlayer(1, 0);
+                break;
+                
+            case 'q': case 'Q': case 'й': case 'Й':
+                useStairs(-1);
+                break;
+                
+            case 'e': case 'E': case 'у': case 'У':
+                useStairs(1);
+                break;
+                
+            case 'Shift':
+                if (isCombatLocked) {
+                    escapeCombat();
+                }
+                break;
+                
+            case '1':
+                if (game.inventory[0]) {
+                    game.activeWeapon = 0;
+                    updateInventoryDisplay();
+                    draw();
+                }
+                break;
+                
+            case '2':
+                if (game.inventory[1]) {
+                    game.activeWeapon = 1;
+                    updateInventoryDisplay();
+                    draw();
+                }
+                break;
+                
+            case '3':
+                if (game.inventory[2]) {
+                    game.activeWeapon = 2;
+                    updateInventoryDisplay();
+                    draw();
+                }
+                break;
+                
+            case '4':
+                if (game.inventory[3]) {
+                    game.activeWeapon = 3;
+                    updateInventoryDisplay();
+                    draw();
+                }
+                break;
+                
+            case ' ':
+                const directions = [
+                    [0, -1], [1, 0], [0, 1], [-1, 0]
+                ];
+                
+                for (const [dx, dy] of directions) {
+                    const enemy = getEnemyAt(
+                        game.player.x + dx, 
+                        game.player.y + dy, 
+                        game.player.floor
+                    );
+                    
+                    if (enemy && enemy.health > 0) {
+                        attackEnemy(enemy.x, enemy.y);
+                        break;
+                    }
+                }
+                break;
+                
+            case 'a': case 'A':
+                if (e.ctrlKey || e.altKey) {
+                    toggleAutoAttack();
+                }
+                break;
+                
+            case 'h': case 'H': case 'р': case 'Р':
+                toggleAllHUD();
+                break;
+                
+            case 'Escape': case 'm': case 'M': case 'ь': case 'Ь':
+                toggleMenu();
+                break;
+                
+            case 'i': case 'I': case 'ш': case 'Ш':
+                showStats();
+                break;
+                
+            case 'b': case 'B': case 'и': case 'И':
+                if (!shopOverlay.style.display || shopOverlay.style.display === 'none') {
+                    openShop();
+                } else {
+                    closeShop();
+                }
+                break;
+        }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        if ([32, 37, 38, 39, 40, 65, 68, 83, 87].includes(e.keyCode)) {
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('click', () => {
+        document.body.focus();
+    });
+    
+    document.body.tabIndex = 0;
+    document.body.focus();
+}
+
+function setupEscapeButton() {
+    const escapeBtn = document.getElementById('escapeBtn');
+    if (escapeBtn) {
+        escapeBtn.addEventListener('click', escapeCombat);
+    }
+}
+
+function checkFirstTime() {
+    try {
+        const hasPlayedBefore = localStorage.getItem('hasPlayedMazeBefore');
+        if (!hasPlayedBefore) {
+            firstTimePlaying = true;
+            localStorage.setItem('hasPlayedMazeBefore', 'true');
+            setTimeout(() => {
+                showInstructions();
+            }, 1000);
+        } else {
+            firstTimePlaying = false;
+        }
+    } catch (e) {
+        firstTimePlaying = false;
+    }
+}
+
+// ===============================
+// МАГАЗИН ПРЕДМЕТОВ
+// ===============================
+
+const shopItems = {
+    healthPotionSmall: {
+        id: 'healthPotionSmall',
+        name: 'Малое зелье здоровья',
+        effect: 'Восстанавливает 20 HP',
+        price: 25,
+        icon: '🧪',
+        color: '#ff4444',
+        type: 'consumable',
+        use: function() {
+            config.playerHealth = Math.min(config.playerMaxHealth, config.playerHealth + 20);
+            showNotification('+20 HP!', 1500);
+            updateUI();
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    healthPotionLarge: {
+        id: 'healthPotionLarge',
+        name: 'Большое зелье здоровья',
+        effect: 'Восстанавливает 50 HP',
+        price: 50,
+        icon: '🧪',
+        color: '#ff0000',
+        type: 'consumable',
+        use: function() {
+            config.playerHealth = Math.min(config.playerMaxHealth, config.playerHealth + 50);
+            showNotification('+50 HP!', 1500);
+            updateUI();
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    strengthPotion: {
+        id: 'strengthPotion',
+        name: 'Зелье силы',
+        effect: '+5 к урону на 10 шагов',
+        price: 40,
+        icon: '💪',
+        color: '#ff8a00',
+        type: 'consumable',
+        use: function() {
+            config.buffs.strength.value += 5;
+            config.buffs.strength.duration = 10;
+            showNotification('+5 к урону на 10 шагов!', 1500);
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    shield: {
+        id: 'shield',
+        name: 'Щит',
+        effect: '+3 к защите на 10 шагов',
+        price: 35,
+        icon: '🛡️',
+        color: '#4488ff',
+        type: 'consumable',
+        use: function() {
+            config.buffs.defense.value += 3;
+            config.buffs.defense.duration = 10;
+            showNotification('+3 к защите на 10 шагов!', 1500);
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    speedBoots: {
+        id: 'speedBoots',
+        name: 'Сапоги скорости',
+        effect: '+2 к обзору на 10 шагов',
+        price: 30,
+        icon: '👟',
+        color: '#44ff44',
+        type: 'consumable',
+        use: function() {
+            config.buffs.speed.value += 2;
+            config.buffs.speed.duration = 10;
+            showNotification('+2 к обзору на 10 шагов!', 1500);
+            updateDiscoveredRooms();
+            draw();
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    mapReveal: {
+        id: 'mapReveal',
+        name: 'Свиток карты',
+        effect: 'Открывает часть карты этажа',
+        price: 60,
+        icon: '🗺️',
+        color: '#8a8aff',
+        type: 'consumable',
+        use: function() {
+            const floor = game.player.floor;
+            const level = game.levels[floor];
+            const revealRadius = 5;
+            
+            for (let y = 0; y < config.levelSize; y++) {
+                for (let x = 0; x < config.levelSize; x++) {
+                    if (level[y][x] === 1) {
+                        const distance = Math.sqrt(
+                            Math.pow(x - game.player.x, 2) + 
+                            Math.pow(y - game.player.y, 2)
+                        );
+                        
+                        if (distance <= revealRadius) {
+                            const roomKey = `${floor}:${x}:${y}`;
+                            game.discoveredRooms.add(roomKey);
+                        }
+                    }
+                }
+            }
+            
+            showNotification('Часть карты раскрыта!', 2000);
+            updateMiniMap();
+            draw();
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    compassReveal: {
+        id: 'compassReveal',
+        name: 'Компас',
+        effect: 'Показывает направление к выходу',
+        price: 75,
+        icon: '🧭',
+        color: '#ffdd00',
+        type: 'consumable',
+        use: function() {
+            if (!game.hasCompass) {
+                game.hasCompass = true;
+                config.showCompass = true;
+                setupCompassControls();
+                updateCompass();
+                showNotification('Компас куплен! Включен автоматически.', 2000);
+                hapticFeedback('success');
+                saveGameToCloud();
+            } else {
+                showNotification('У вас уже есть компас!', 1500);
+            }
+        }
+    },
+    teleportScroll: {
+        id: 'teleportScroll',
+        name: 'Свиток телепортации',
+        effect: 'Телепортирует на случайный этаж',
+        price: 100,
+        icon: '🌀',
+        color: '#64b4ff',
+        type: 'consumable',
+        use: function() {
+            let targetFloor;
+            do {
+                targetFloor = random.int(0, config.levels - 1);
+            } while (targetFloor === game.player.floor);
+            
+            const targetLevel = game.levels[targetFloor];
+            let targetX, targetY;
+            let attempts = 0;
+            
+            while (attempts < 100) {
+                targetX = random.int(1, config.levelSize - 2);
+                targetY = random.int(1, config.levelSize - 2);
+                
+                if (targetLevel[targetY][targetX] === 1 && 
+                    !getEnemyAt(targetX, targetY, targetFloor)) {
+                    break;
+                }
+                attempts++;
+            }
+            
+            if (attempts < 100) {
+                game.player.floor = targetFloor;
+                game.player.x = targetX;
+                game.player.y = targetY;
+                updateDiscoveredRooms();
+                updateCamera();
+                draw();
+                updateMiniMap();
+                updateCompass();
+                
+                showNotification(`🌀 Телепорт! Этаж ${targetFloor + 1}`, 2500);
+                hapticFeedback('success');
+                saveGameToCloud();
+            } else {
+                showNotification('Свиток не сработал!', 1500);
+            }
+        }
+    },
+    damageBoost: {
+        id: 'damageBoost',
+        name: 'Усиление оружия',
+        effect: '+2 к урону текущего оружия',
+        price: 120,
+        icon: '⚔️',
+        color: '#ff4444',
+        type: 'permanent',
+        use: function() {
+            const weapon = game.inventory[game.activeWeapon];
+            if (weapon) {
+                weapon.damage += 2;
+                updateInventoryDisplay();
+                showNotification(`${weapon.name} усилен! Урон: ${weapon.damage}`, 2000);
+                hapticFeedback('success');
+                saveGameToCloud();
+            } else {
+                showNotification('Сначала выберите оружие!', 1500);
+            }
+        }
+    },
+    healthUpgrade: {
+        id: 'healthUpgrade',
+        name: 'Увеличение здоровья',
+        effect: '+25 к максимальному здоровью',
+        price: 150,
+        icon: '❤️',
+        color: '#ff4444',
+        type: 'permanent',
+        use: function() {
+            config.playerMaxHealth += 25;
+            config.playerHealth += 25;
+            updateUI();
+            showNotification('Максимальное здоровье увеличено на 25!', 2000);
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    torch: {
+        id: 'torch',
+        name: 'Магический факел',
+        effect: 'Освещает путь до препятствия (10 использований)',
+        price: 80,
+        icon: '🔥',
+        color: '#ff8a00',
+        type: 'consumable',
+        use: function() {
+            addToInventory(items.torch);
+            showNotification('Получен магический факел! Используйте его для освещения пути.', 2000);
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    dagger: {
+        id: 'dagger',
+        name: 'Кинжал',
+        effect: 'Урон от Кинжала 5',
+        price: 50,
+        icon: '🗡️',
+        color: '#8a8aff',
+        type: 'permanent',
+        use: function() {
+            let emptySlot = -1;
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    emptySlot = i;
+                    break;
+                }
+            }
+            
+            if (emptySlot !== -1) {
+                game.inventory[emptySlot] = weapons.dagger;
+                updateInventoryDisplay();
+                showNotification('Получен Кинжал!', 2000);
+            } else {
+                let weakestSlot = 0;
+                for (let i = 1; i < game.inventory.length; i++) {
+                    if (game.inventory[i] && game.inventory[i].damage < game.inventory[weakestSlot].damage) {
+                        weakestSlot = i;
+                    }
+                }
+                
+                const oldWeapon = game.inventory[weakestSlot];
+                game.inventory[weakestSlot] = weapons.dagger;
+                updateInventoryDisplay();
+                showNotification(`Заменил ${oldWeapon.name} на Кинжал!`, 2000);
+            }
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    sword: {
+        id: 'sword',
+        name: 'Меч',
+        effect: 'Урон от Меча 8',
+        price: 100,
+        icon: '⚔️',
+        color: '#ff8a00',
+        type: 'permanent',
+        use: function() {
+            let emptySlot = -1;
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    emptySlot = i;
+                    break;
+                }
+            }
+            
+            if (emptySlot !== -1) {
+                game.inventory[emptySlot] = weapons.sword;
+                updateInventoryDisplay();
+                showNotification('Получен Меч!', 2000);
+            } else {
+                let weakestSlot = 0;
+                for (let i = 1; i < game.inventory.length; i++) {
+                    if (game.inventory[i] && game.inventory[i].damage < game.inventory[weakestSlot].damage) {
+                        weakestSlot = i;
+                    }
+                }
+                
+                const oldWeapon = game.inventory[weakestSlot];
+                game.inventory[weakestSlot] = weapons.sword;
+                updateInventoryDisplay();
+                showNotification(`Заменил ${oldWeapon.name} на Меч!`, 2000);
+            }
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    axe: {
+        id: 'axe',
+        name: 'Топор',
+        effect: 'Урон от Топора 12',
+        price: 150,
+        icon: '🪓',
+        color: '#ff4444',
+        type: 'permanent',
+        use: function() {
+            let emptySlot = -1;
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    emptySlot = i;
+                    break;
+                }
+            }
+            
+            if (emptySlot !== -1) {
+                game.inventory[emptySlot] = weapons.axe;
+                updateInventoryDisplay();
+                showNotification('Получен Топор!', 2000);
+            } else {
+                let weakestSlot = 0;
+                for (let i = 1; i < game.inventory.length; i++) {
+                    if (game.inventory[i] && game.inventory[i].damage < game.inventory[weakestSlot].damage) {
+                        weakestSlot = i;
+                    }
+                }
+                
+                const oldWeapon = game.inventory[weakestSlot];
+                game.inventory[weakestSlot] = weapons.axe;
+                updateInventoryDisplay();
+                showNotification(`Заменил ${oldWeapon.name} на Топор!`, 2000);
+            }
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    magicStaff: {
+        id: 'magicStaff',
+        name: 'Посох',
+        effect: 'Урон от Посоха 15',
+        price: 175,
+        icon: '🦯',
+        color: '#aa44ff',
+        type: 'permanent',
+        use: function() {
+            let emptySlot = -1;
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    emptySlot = i;
+                    break;
+                }
+            }
+            
+            if (emptySlot !== -1) {
+                game.inventory[emptySlot] = weapons.magicStaff;
+                updateInventoryDisplay();
+                showNotification('Получен Посох!', 2000);
+            } else {
+                let weakestSlot = 0;
+                for (let i = 1; i < game.inventory.length; i++) {
+                    if (game.inventory[i] && game.inventory[i].damage < game.inventory[weakestSlot].damage) {
+                        weakestSlot = i;
+                    }
+                }
+                
+                const oldWeapon = game.inventory[weakestSlot];
+                game.inventory[weakestSlot] = weapons.magicStaff;
+                updateInventoryDisplay();
+                showNotification(`Заменил ${oldWeapon.name} на Посох!`, 2000);
+            }
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    legendary: {
+        id: 'legendary',
+        name: 'Легендарный',
+        effect: 'Урон от Легендарного 20',
+        price: 220,
+        icon: '🔫',
+        color: '#ffdd00',
+        type: 'permanent',
+        use: function() {
+            let emptySlot = -1;
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    emptySlot = i;
+                    break;
+                }
+            }
+            
+            if (emptySlot !== -1) {
+                game.inventory[emptySlot] = weapons.legendary;
+                updateInventoryDisplay();
+                showNotification('Получен Легендарный!', 2000);
+            } else {
+                let weakestSlot = 0;
+                for (let i = 1; i < game.inventory.length; i++) {
+                    if (game.inventory[i] && game.inventory[i].damage < game.inventory[weakestSlot].damage) {
+                        weakestSlot = i;
+                    }
+                }
+                
+                const oldWeapon = game.inventory[weakestSlot];
+                game.inventory[weakestSlot] = weapons.legendary;
+                updateInventoryDisplay();
+                showNotification(`Заменил ${oldWeapon.name} на Легендарный!`, 2000);
+            }
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    bow: {
+        id: 'bow',
+        name: 'Охотничий лук',
+        effect: 'Атакует врагов на расстоянии (дальность: 5 клеток)',
+        price: 150,
+        icon: '🏹',
+        color: '#8a6642',
+        type: 'permanent',
+        use: function() {
+            let emptySlot = -1;
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    emptySlot = i;
+                    break;
+                }
+            }
+            
+            if (emptySlot !== -1) {
+                game.inventory[emptySlot] = weapons.bow;
+                updateInventoryDisplay();
+                showNotification('Получен лук! Дальность атаки: 5 клеток', 2000);
+            } else {
+                let weakestSlot = 0;
+                for (let i = 1; i < game.inventory.length; i++) {
+                    if (game.inventory[i] && game.inventory[i].damage < game.inventory[weakestSlot].damage) {
+                        weakestSlot = i;
+                    }
+                }
+                
+                const oldWeapon = game.inventory[weakestSlot];
+                game.inventory[weakestSlot] = weapons.bow;
+                updateInventoryDisplay();
+                showNotification(`Заменил ${oldWeapon.name} на лук!`, 2000);
+            }
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    },
+    arrows: {
+        id: 'arrows',
+        name: 'Набор стрел',
+        effect: '5 стрел для лука',
+        price: 30,
+        icon: '➹',
+        color: '#8a8aff',
+        type: 'consumable',
+        use: function() {
+            addToInventory(items.arrows);
+            showNotification('Получено 5 стрел для лука!', 2000);
+            hapticFeedback('success');
+            saveGameToCloud();
+        }
+    }
+};
+
+let currentShopInventory = [];
+
+function initShop() {
+    shopBtn.addEventListener('click', openShop);
+    
+    generateShopInventory();
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'b' || e.key === 'B' || e.key === 'и' || e.key === 'И') {
+            if (!shopOverlay.style.display || shopOverlay.style.display === 'none') {
+                openShop();
+            } else {
+                closeShop();
+            }
+            e.preventDefault();
+        }
+    });
+}
+
+function generateShopInventory() {
+    currentShopInventory = [];
+    const itemKeys = Object.keys(shopItems);
+    
+    currentShopInventory.push(shopItems.healthPotionSmall);
+    
+    const itemCount = random.int(4, 6);
+    for (let i = 0; i < itemCount; i++) {
+        const randomItemKey = random.choice(itemKeys);
+        const item = shopItems[randomItemKey];
+        
+        if (!currentShopInventory.some(existing => existing.id === item.id)) {
+            currentShopInventory.push(item);
+        } else {
+            i--;
+        }
+    }
+    
+    renderShopItems();
+}
+
+function renderShopItems() {
+    currentGoldElement.textContent = game.gold;
+    shopItemsContainer.innerHTML = '';
+    
+    currentShopInventory.forEach(item => {
+        const canAfford = game.gold >= item.price;
+        const itemElement = document.createElement('div');
+        itemElement.className = `shop-item ${canAfford ? '' : 'disabled'}`;
+        
+        const isCompassAndHas = (item.id === 'compassReveal' && game.hasCompass);
+        
+        itemElement.innerHTML = `
+            <div class="shop-item-icon" style="color: ${item.color}">${item.icon}</div>
+            <div class="shop-item-name">${item.name}</div>
+            <div class="shop-item-effect">${item.effect}</div>
+            <div class="shop-item-price ${canAfford && !isCompassAndHas ? '' : 'disabled'}">
+                ${item.price} 🪙
+            </div>
+        `;
+        
+        if (canAfford && !isCompassAndHas) {
+            itemElement.addEventListener('click', () => purchaseItem(item));
+        }
+        
+        shopItemsContainer.appendChild(itemElement);
+    });
+}
+
+function purchaseItem(item) {
+    if (game.gold < item.price) {
+        showNotification('Недостаточно золота!', 1500);
+        return;
+    }
+    
+    if (item.id === 'compassReveal' && game.hasCompass) {
+        showNotification('У вас уже есть компас!', 1500);
+        return;
+    }
+    
+    game.gold -= item.price;
+    
+    item.use();
+    
+    const itemElements = document.querySelectorAll('.shop-item');
+    itemElements.forEach(el => {
+        if (el.querySelector('.shop-item-name').textContent === item.name) {
+            el.classList.add('purchase-success');
+            setTimeout(() => el.classList.remove('purchase-success'), 500);
+        }
+    });
+    
+    updateStatsDisplay();
+    renderShopItems();
+    
+    saveUISettings();
+    
+    showNotification(`Куплено: ${item.name}`, 2000);
+}
+
+function openShop() {
+    if (game.foundExit) {
+        showNotification('Игра завершена!', 1500);
+        return;
+    }
+    
+    currentGoldElement.textContent = game.gold;
+    renderShopItems();
+    shopOverlay.style.display = 'flex';
+    menuOverlay.style.display = 'none';
+    notification.style.display = 'none';
+}
+
+function closeShop() {
+    shopOverlay.style.display = 'none';
+    draw();
+}
+
+function refreshShop() {
+    const refreshCost = 10;
+    
+    if (game.gold >= refreshCost) {
+        game.gold -= refreshCost;
+        generateShopInventory();
+        currentGoldElement.textContent = game.gold;
+        updateStatsDisplay();
+        
+        showNotification('Ассортимент обновлен! (-10 🪙)', 1500);
+        saveUISettings();
+    } else {
+        showNotification('Недостаточно золота для обновления!', 1500);
+    }
+}
+
+// ===============================
+// ИНИЦИАЛИЗАЦИЯ
+// ===============================
+
+function init() {
+    try {
+        resizeCanvas();
+        setupSwipeControls();
+        setupCompassControls();
+        setupRangedAttackControls();
+        setupEscapeButton();
+        
+        loadUISettings();
+        checkFirstTime();
+        
+        if (!firstTimePlaying) {
+            showNotification('Добро пожаловать обратно в Лабиринт!', 2000);
+        }
+        
+        setupCanvasInteractions();
+        fixMobileTap();
+        
+        autoAttackToggle.addEventListener('click', toggleAutoAttack);
+        setupKeyboardControls();
+        setupMobileTap();
+        
+        initShop();
+        
+        setupTelegramIntegration();
+        
+        generateAllLevels();
+        
+        draw();
+        updateInventoryDisplay();
+        updateUI();
+        updateMiniMap();
+        updateCompass();
+        
+        setTimeout(() => {
+            showInstructions();
+        }, 500);
+        
+        setTimeout(() => {
+            loadGameFromCloud();
+        }, 1000);
+        
+        window.addEventListener('blur', () => {
+            saveGameToCloud();
+        });
+        
+        window.addEventListener('focus', () => {
+            draw();
+            updateUI();
+        });
+        
+        tg.onEvent('viewportChanged', () => {
+            resizeCanvas();
+        });
+        
+        tg.onEvent('themeChanged', () => {
+            const theme = tg.themeParams;
+            if (theme) {
+                document.body.style.backgroundColor = theme.bg_color || '#0a0a14';
+            }
+        });
+        
+    } catch (e) {
+        console.error('Ошибка инициализации:', e);
+        showNotification('Ошибка загрузки игры. Перезагрузите страницу.', 3000);
+    }
+}
+
+// ===============================
+// ЗАПУСК ИГРЫ
+// ===============================
+window.onload = init;
+window.addEventListener('resize', resizeCanvas);
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+</script>
+</body>
+</html>
