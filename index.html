@@ -4655,6 +4655,35 @@ function setupRangedAttackControls() {
 // ФУНКЦИИ ДЛЯ ТЕЛЕГРАМ ИНТЕГРАЦИИ
 // ===============================
 
+function setupTelegramApp() {
+    if (window.Telegram && Telegram.WebApp) {
+        const tg = Telegram.WebApp;
+        
+        // Основные настройки
+        tg.ready();
+        tg.expand(); // Разворачиваем на весь экран
+        tg.disableVerticalSwipes(); // Убираем кнопку меню
+        
+        // Настраиваем цвета под тему игры
+        tg.setHeaderColor('#0a0a14'); // Цвет заголовка
+        tg.setBackgroundColor('#0a0a14'); // Цвет фона
+        
+        // Скрываем все стандартные кнопки Telegram
+        tg.MainButton.hide(); // Главная кнопка
+        tg.BackButton.hide(); // Кнопка "назад"
+        
+        // Блокируем вертикальные свайпы (чтобы случайно не выйти)
+        tg.disableVerticalSwipes();
+        
+        // Отслеживаем изменение темы Telegram
+        Telegram.WebApp.onEvent('themeChanged', function() {
+            document.body.style.backgroundColor = Telegram.WebApp.backgroundColor;
+        });
+        
+        console.log('Telegram настроен успешно');
+    }
+}
+	
 function updateBackButton() {
     if (menuOverlay.style.display === 'flex' || shopOverlay.style.display === 'flex') {
         tg.BackButton.show();
@@ -5784,7 +5813,7 @@ function init() {
         setupMobileTap();
         
         initShop();
-        
+        setupTelegramApp();
         setupTelegramIntegration();
         
         generateAllLevels();
@@ -5839,6 +5868,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
