@@ -1515,7 +1515,7 @@ const game = {
     hasMap: false,
     hasSchematic: false,
     hasCompass: false,
-    gold: 20000,
+    gold: 0,
     totalKills: 0,
     maxCombo: 0,
     bestKillStreak: 0,
@@ -3099,7 +3099,7 @@ function newGame() {
     game.hasMap = false;
     game.hasCompass = false;
     game.hasSchematic = false;
-    game.gold = 20000;
+    game.gold = 0;
     game.totalKills = 0;
     game.maxCombo = 0;
     game.bestKillStreak = 0;
@@ -5792,4 +5792,5 @@ window.addEventListener('resize', resizeCanvas);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 </script>
 </body>
+
 </html>
