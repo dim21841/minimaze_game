@@ -1410,6 +1410,15 @@ const enemies = {
         xp: 20,
         rarity: 2
     },
+	gorilla: {
+        name: "Горила",
+        health: 30,
+        damage: 6,
+        symbol: "🦍",
+        color: "#cccccc",
+        xp: 25,
+        rarity: 2
+    },
     zombie: {
         name: "Зомби",
         health: 35,
@@ -1428,13 +1437,40 @@ const enemies = {
         xp: 35,
         rarity: 3
     },
-    orc: {
+	bison: {
+        name: "Бизон",
+        health: 45,
+        damage: 9,
+        symbol: "🦬",
+        color: "#cccccc",
+        xp: 40,
+        rarity: 3
+    },
+	orc: {
         name: "Орк",
         health: 60,
         damage: 10,
         symbol: "🧌",
         color: "#664444",
         xp: 50,
+        rarity: 4
+    },
+    crocodile: {
+        name: "Крокодил",
+        health: 70,
+        damage: 12,
+        symbol: "🐊",
+        color: "#664444",
+        xp: 70,
+        rarity: 4
+    },
+	snake: {
+        name: "Змея",
+        health: 85,
+        damage: 14,
+        symbol: "🐍",
+        color: "#ff4444",
+        xp: 85,
         rarity: 4
     },
     dragon: {
@@ -1444,6 +1480,15 @@ const enemies = {
         symbol: "🐉",
         color: "#ff4444",
         xp: 100,
+        rarity: 5
+    },
+	t-rex: {
+        name: "Тиранозавр",
+        health: 150,
+        damage: 20,
+        symbol: "🦖",
+        color: "#ff4444",
+        xp: 130,
         rarity: 5
     }
 };
@@ -5794,3 +5839,4 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
