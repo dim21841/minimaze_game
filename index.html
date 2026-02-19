@@ -4659,21 +4659,18 @@ function setupTelegramApp() {
     if (window.Telegram && Telegram.WebApp) {
         const tg = Telegram.WebApp;
         
-        // Сообщаем Telegram, что приложение готово
+        // Последовательная инициализация
         tg.ready();
         
-        // Разворачиваем на весь экран
-        tg.expand();
-        
-        // Проверяем размеры и принудительно расширяем если нужно
-        const checkAndExpand = () => {
-            if (window.innerHeight < window.screen.height * 0.9) {
-                tg.expand();
-            }
+        // Многократное расширение для надежности
+        const expandSequence = () => {
+            tg.expand();
+            setTimeout(() => tg.expand(), 200);
+            setTimeout(() => tg.expand(), 500);
+            setTimeout(() => tg.expand(), 1000);
         };
         
-        checkAndExpand();
-        window.addEventListener('resize', checkAndExpand);
+        expandSequence();
         
         // Настройка цветов
         tg.setHeaderColor('#0a0a14');
@@ -4686,12 +4683,7 @@ function setupTelegramApp() {
         // Блокируем свайпы
         tg.disableVerticalSwipes();
         
-        // Обработка изменения темы
-        tg.onEvent('themeChanged', function() {
-            document.body.style.backgroundColor = tg.backgroundColor;
-        });
-        
-        console.log('Telegram Mini App настроен');
+        console.log('Telegram настроен');
     }
 }
 	
@@ -5879,6 +5871,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
