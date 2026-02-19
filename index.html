@@ -4661,24 +4661,20 @@ function setupTelegramApp() {
         
         // Основные настройки
         tg.ready();
-        tg.expand(); // Разворачиваем на весь экран
-        tg.disableVerticalSwipes(); // Убираем кнопку меню
+        
+        // Разворачиваем на весь экран (это убирает белую полосу внизу)
+        tg.expand();
         
         // Настраиваем цвета под тему игры
-        tg.setHeaderColor('#0a0a14'); // Цвет заголовка
-        tg.setBackgroundColor('#0a0a14'); // Цвет фона
+        tg.setHeaderColor('#0a0a14');
+        tg.setBackgroundColor('#0a0a14');
         
-        // Скрываем все стандартные кнопки Telegram
-        tg.MainButton.hide(); // Главная кнопка
-        tg.BackButton.hide(); // Кнопка "назад"
+        // Скрываем стандартные кнопки
+        tg.MainButton.hide();
+        tg.BackButton.hide();
         
-        // Блокируем вертикальные свайпы (чтобы случайно не выйти)
+        // Блокируем вертикальные свайпы
         tg.disableVerticalSwipes();
-        
-        // Отслеживаем изменение темы Telegram
-        Telegram.WebApp.onEvent('themeChanged', function() {
-            document.body.style.backgroundColor = Telegram.WebApp.backgroundColor;
-        });
         
         console.log('Telegram настроен успешно');
     }
@@ -5868,6 +5864,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
