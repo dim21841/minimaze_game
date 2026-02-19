@@ -5791,7 +5791,8 @@ function refreshShop() {
 // ===============================
 
 function init() {
-    try {
+    try {		
+        setupTelegramApp();
         resizeCanvas();
         setupSwipeControls();
         setupCompassControls();
@@ -5813,7 +5814,6 @@ function init() {
         setupMobileTap();
         
         initShop();
-        setupTelegramApp();
         setupTelegramIntegration();
         
         generateAllLevels();
@@ -5868,6 +5868,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
