@@ -5757,7 +5757,7 @@ function openShop() {
         showNotification('Игра завершена!', 1500);
         return;
     }
-    
+    generateShopInventory();
     currentGoldElement.textContent = game.gold;
     renderShopItems();
     shopOverlay.style.display = 'flex';
@@ -5868,6 +5868,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
