@@ -1570,6 +1570,7 @@ const game = {
         dragonSlayer: false,
         flawlessVictory: false
     }
+	shopOpenCount: 0
 };
 
 // ===============================
@@ -1586,7 +1587,6 @@ let activeTorch = null;
 let torchUses = 0;
 let playerArrows = 0;
 let firstTimePlaying = true;
-let shopOpenCount = 0;
 
 // ===============================
 // КЛАСС RANDOM
@@ -3149,6 +3149,7 @@ function newGame() {
     game.totalKills = 0;
     game.maxCombo = 0;
     game.bestKillStreak = 0;
+	game.shopOpenCount = 0;
     
     activeTorch = null;
     torchUses = 0;
@@ -5761,14 +5762,12 @@ function openShop() {
         showNotification('Игра завершена!', 1500);
         return;
     }
-	// Увеличиваем счетчик при каждом открытии
-    shopOpenCount++;
+	game.shopOpenCount = (game.shopOpenCount || 0) + 1;
     
-    // Проверяем, кратно ли 5-ти
-    if (shopOpenCount % 5 === 0) {
+    if (game.shopOpenCount % 5 === 0) {
         generateShopInventory();
         showNotification('🔄 Ассортимент магазина обновлен!', 1500);
-    }
+    }	
     currentGoldElement.textContent = game.gold;
     renderShopItems();
     shopOverlay.style.display = 'flex';
@@ -5879,6 +5878,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
