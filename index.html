@@ -1586,6 +1586,7 @@ let activeTorch = null;
 let torchUses = 0;
 let playerArrows = 0;
 let firstTimePlaying = true;
+let shopOpenCount = 0;
 
 // ===============================
 // КЛАСС RANDOM
@@ -5760,7 +5761,14 @@ function openShop() {
         showNotification('Игра завершена!', 1500);
         return;
     }
-    generateShopInventory();
+	// Увеличиваем счетчик при каждом открытии
+    shopOpenCount++;
+    
+    // Проверяем, кратно ли 5-ти
+    if (shopOpenCount % 5 === 0) {
+        generateShopInventory();
+        showNotification('🔄 Ассортимент магазина обновлен!', 1500);
+    }
     currentGoldElement.textContent = game.gold;
     renderShopItems();
     shopOverlay.style.display = 'flex';
@@ -5871,6 +5879,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
