@@ -608,6 +608,40 @@
         margin: 2px;
     }
     
+	/* Стили для превью скинов */
+.skin-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.skin-preview:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px currentColor;
+}
+
+.skin-preview.equipped {
+    border: 3px solid #ffff00;
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.5);
+}
+
+.skin-preview.owned {
+    border: 2px solid #4a4a7a;
+    background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+}
+
+.skin-preview.not-owned {
+    border: 2px solid #3a3a3a;
+    background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+    opacity: 0.7;
+}
+	
     .notification {
         width: 90% !important;
         max-width: 350px !important;
@@ -1133,6 +1167,7 @@
   <div class="auto-attack-toggle" id="autoAttackToggle" title="Автоатака (A)">A</div>
   <div class="menu-btn" onClick="toggleMenu()">☰</div>
   <div class="arrow-controls">
+  	<div class="menu-btn-item" onClick="showSkinSelector()">👕 Выбрать скин</div>
     <div class="arrow-btn" onClick="movePlayer(0, -1)">↑</div>
     <div class="arrow-btn" onClick="movePlayer(-1, 0)">←</div>
     <div class="arrow-btn" onClick="movePlayer(0, 1)">↓</div>
@@ -1492,6 +1527,119 @@ const enemies = {
         rarity: 5
     }
 };
+
+// ===============================
+// СКИНЫ ДЛЯ ГЕРОЯ
+// ===============================
+const heroSkins = {
+    default: {
+        id: 'default',
+        name: 'Стандартный',
+        symbol: '👤',
+        color: '#4a8aff',
+        price: 0,
+        description: 'Обычный герой',
+        headColor: '#ffddaa',
+        bodyColor: '#4a8aff',
+        owned: true // По умолчанию есть
+    },
+    warrior: {
+        id: 'warrior',
+        name: 'Воин',
+        symbol: '⚔️',
+        color: '#ff8a00',
+        price: 100,
+        description: 'Закаленный в боях воин',
+        headColor: '#ccaa88',
+        bodyColor: '#b8860b'
+    },
+    mage: {
+        id: 'mage',
+        name: 'Маг',
+        symbol: '🔮',
+        color: '#aa44ff',
+        price: 150,
+        description: 'Властелин магии',
+        headColor: '#aaddff',
+        bodyColor: '#663399'
+    },
+    assassin: {
+        id: 'assassin',
+        name: 'Убийца',
+        symbol: '🗡️',
+        color: '#44aa44',
+        price: 120,
+        description: 'Быстрый и смертоносный',
+        headColor: '#888888',
+        bodyColor: '#2e8b57'
+    },
+    knight: {
+        id: 'knight',
+        name: 'Рыцарь',
+        symbol: '🛡️',
+        color: '#888888',
+        price: 200,
+        description: 'В тяжелых доспехах',
+        headColor: '#c0c0c0',
+        bodyColor: '#4169e1'
+    },
+    barbarian: {
+        id: 'barbarian',
+        name: 'Варвар',
+        symbol: '🪓',
+        color: '#cd5c5c',
+        price: 180,
+        description: 'Дикий и сильный',
+        headColor: '#d2691e',
+        bodyColor: '#8b4513'
+    },
+    skeleton: {
+        id: 'skeleton',
+        name: 'Скелет',
+        symbol: '💀',
+        color: '#ffffff',
+        price: 250,
+        description: 'Нежить из глубин',
+        headColor: '#eeeeee',
+        bodyColor: '#aaaaaa'
+    },
+    demon: {
+        id: 'demon',
+        name: 'Демон',
+        symbol: '👹',
+        color: '#ff4444',
+        price: 300,
+        description: 'Исчадие ада',
+        headColor: '#ff6b6b',
+        bodyColor: '#8b0000'
+    },
+    angel: {
+        id: 'angel',
+        name: 'Ангел',
+        symbol: '😇',
+        color: '#ffffaa',
+        price: 350,
+        description: 'Небесный посланник',
+        headColor: '#ffefd5',
+        bodyColor: '#f0e68c'
+    },
+    ghost: {
+        id: 'ghost',
+        name: 'Призрак',
+        symbol: '👻',
+        color: '#e0e0ff',
+        price: 220,
+        description: 'Прозрачный дух',
+        headColor: '#b0c4de',
+        bodyColor: '#e6e6fa'
+    }
+};
+
+// Текущий выбранный скин
+let currentSkin = 'default';
+
+// Массив купленных скинов (по умолчанию есть только стандартный)
+let ownedSkins = ['default'];
 
 // ===============================
 // КОНФИГУРАЦИЯ
@@ -3139,7 +3287,7 @@ function newGame() {
         defense: { value: 0, duration: 0 },
         speed: { value: 0, duration: 0 }
     };
-    
+    loadSkinsFromStorage();
     game.inventory = [weapons.fist, null, null, null];
     game.activeWeapon = 0;
     game.damageNumbers = [];
@@ -3625,28 +3773,42 @@ function drawPlayer(pos) {
     const cellSize = config.cellSize;
     const left = pos.x;
     const top = pos.y;
+    const skin = heroSkins[currentSkin] || heroSkins.default;
     
+    // Тень
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
     ctx.ellipse(left + cellSize/2, top + cellSize/2 + 3, 
         cellSize/3, cellSize/6, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    ctx.fillStyle = '#4a8aff';
+    // Тело (в цвете скина)
+    ctx.fillStyle = skin.bodyColor;
     ctx.beginPath();
     ctx.arc(left + cellSize/2, top + cellSize/2, cellSize/3, 0, Math.PI * 2);
     ctx.fill();
     
-    ctx.fillStyle = '#ffddaa';
+    // Голова (в цвете скина)
+    ctx.fillStyle = skin.headColor;
     ctx.beginPath();
     ctx.arc(left + cellSize/2, top + cellSize/2 - 5, cellSize/4, 0, Math.PI * 2);
     ctx.fill();
     
+    // Глаза
     ctx.fillStyle = '#000';
     ctx.beginPath();
     ctx.arc(left + cellSize/2 - 4, top + cellSize/2 - 6, 2, 0, Math.PI * 2);
     ctx.arc(left + cellSize/2 + 4, top + cellSize/2 - 6, 2, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Символ скина над головой (для особых скинов)
+    if (skin.symbol !== '👤') {
+        ctx.font = `${cellSize * 0.4}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = skin.color;
+        ctx.fillText(skin.symbol, left + cellSize/2, top + cellSize/2 - 15);
+    }
     
     const weapon = game.inventory[game.activeWeapon];
     if (weapon) {
@@ -3656,6 +3818,53 @@ function drawPlayer(pos) {
         ctx.fillStyle = weapon.color;
         ctx.fillText(weapon.symbol, left + cellSize/2, top + cellSize/2 + 5);
     }
+}
+
+// Показать меню выбора скинов
+function showSkinSelector() {
+    let skinsHTML = '<div style="color:#8a8aff; font-weight:bold; margin-bottom:15px; font-size:18px;">👕 ВЫБОР СКИНА</div>';
+    
+    skinsHTML += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">';
+    
+    for (const [skinId, skin] of Object.entries(heroSkins)) {
+        const isOwned = ownedSkins.includes(skinId);
+        const isCurrent = currentSkin === skinId;
+        
+        skinsHTML += `
+            <div onclick="${isOwned ? `changeSkin('${skinId}')` : ''}" 
+                 style="
+                    background: ${isCurrent ? 'linear-gradient(to bottom, #4a4a8a, #2a2a5a)' : (isOwned ? 'linear-gradient(to bottom, #2a2a4a, #1a1a3a)' : 'linear-gradient(to bottom, #3a3a3a, #2a2a2a)')};
+                    border: 3px solid ${isCurrent ? '#ffff00' : (isOwned ? '#4a4a7a' : '#3a3a3a')};
+                    border-radius: 10px;
+                    padding: 15px 5px;
+                    text-align: center;
+                    cursor: ${isOwned ? 'pointer' : 'not-allowed'};
+                    opacity: ${isOwned ? 1 : 0.5};
+                    transition: all 0.2s;
+                 "
+                 title="${skin.description}">
+                <div style="font-size: 40px; color: ${skin.color};">${skin.symbol}</div>
+                <div style="font-size: 12px; margin: 5px 0; color: #fff;">${skin.name}</div>
+                ${!isOwned ? `<div style="font-size: 11px; color: #ffd700;">${skin.price}🪙</div>` : ''}
+                ${isCurrent ? '<div style="font-size: 11px; color: #ffff00;">✓ ЭКИПИРОВАН</div>' : ''}
+            </div>
+        `;
+    }
+    
+    skinsHTML += '</div>';
+    
+    skinsHTML += `
+        <div style="display: flex; gap: 10px;">
+            <div class="menu-btn-item" onclick="closeSkinSelector()" style="flex: 1; padding: 12px;">Закрыть</div>
+        </div>
+    `;
+    
+    notificationText.innerHTML = skinsHTML;
+    notification.style.display = 'block';
+}
+
+function closeSkinSelector() {
+    notification.style.display = 'none';
 }
 
 function drawEnemyHealthBars() {
@@ -5656,7 +5865,127 @@ const shopItems = {
             hapticFeedback('success');
             saveGameToCloud();
         }
+    },
+	// Добавьте в shopItems (после существующих товаров)
+skins: {
+    warrior: {
+        id: 'skin_warrior',
+        name: 'Скин "Воин"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.warrior.price,
+        icon: heroSkins.warrior.symbol,
+        color: heroSkins.warrior.color,
+        type: 'skin',
+        skinId: 'warrior',
+        use: function() {
+            purchaseSkin('warrior');
+        }
+    },
+    mage: {
+        id: 'skin_mage',
+        name: 'Скин "Маг"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.mage.price,
+        icon: heroSkins.mage.symbol,
+        color: heroSkins.mage.color,
+        type: 'skin',
+        skinId: 'mage',
+        use: function() {
+            purchaseSkin('mage');
+        }
+    },
+    assassin: {
+        id: 'skin_assassin',
+        name: 'Скин "Убийца"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.assassin.price,
+        icon: heroSkins.assassin.symbol,
+        color: heroSkins.assassin.color,
+        type: 'skin',
+        skinId: 'assassin',
+        use: function() {
+            purchaseSkin('assassin');
+        }
+    },
+    knight: {
+        id: 'skin_knight',
+        name: 'Скин "Рыцарь"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.knight.price,
+        icon: heroSkins.knight.symbol,
+        color: heroSkins.knight.color,
+        type: 'skin',
+        skinId: 'knight',
+        use: function() {
+            purchaseSkin('knight');
+        }
+    },
+    barbarian: {
+        id: 'skin_barbarian',
+        name: 'Скин "Варвар"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.barbarian.price,
+        icon: heroSkins.barbarian.symbol,
+        color: heroSkins.barbarian.color,
+        type: 'skin',
+        skinId: 'barbarian',
+        use: function() {
+            purchaseSkin('barbarian');
+        }
+    },
+    skeleton: {
+        id: 'skin_skeleton',
+        name: 'Скин "Скелет"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.skeleton.price,
+        icon: heroSkins.skeleton.symbol,
+        color: heroSkins.skeleton.color,
+        type: 'skin',
+        skinId: 'skeleton',
+        use: function() {
+            purchaseSkin('skeleton');
+        }
+    },
+    demon: {
+        id: 'skin_demon',
+        name: 'Скин "Демон"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.demon.price,
+        icon: heroSkins.demon.symbol,
+        color: heroSkins.demon.color,
+        type: 'skin',
+        skinId: 'demon',
+        use: function() {
+            purchaseSkin('demon');
+        }
+    },
+    angel: {
+        id: 'skin_angel',
+        name: 'Скин "Ангел"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.angel.price,
+        icon: heroSkins.angel.symbol,
+        color: heroSkins.angel.color,
+        type: 'skin',
+        skinId: 'angel',
+        use: function() {
+            purchaseSkin('angel');
+        }
+    },
+    ghost: {
+        id: 'skin_ghost',
+        name: 'Скин "Призрак"',
+        effect: 'Новый облик для героя',
+        price: heroSkins.ghost.price,
+        icon: heroSkins.ghost.symbol,
+        color: heroSkins.ghost.color,
+        type: 'skin',
+        skinId: 'ghost',
+        use: function() {
+            purchaseSkin('ghost');
+        }
     }
+}
 };
 
 let currentShopInventory = [];
@@ -5681,12 +6010,33 @@ function initShop() {
 function generateShopInventory() {
     currentShopInventory = [];
     const itemKeys = Object.keys(shopItems);
+    const skinKeys = Object.keys(shopItems.skins); // Получаем все скины
     
+    // Всегда добавляем базовые зелья
     currentShopInventory.push(shopItems.healthPotionSmall);
     
-    const itemCount = random.int(4, 6);
+	// Добавляем 1-2 случайных скина (которых у игрока еще нет)
+    const availableSkins = skinKeys.filter(skinKey => {
+        const skinId = shopItems.skins[skinKey].skinId;
+        return !ownedSkins.includes(skinId) && skinId !== 'default';
+    });
+    
+    if (availableSkins.length > 0) {
+        const skinCount = Math.min(2, availableSkins.length);
+        for (let i = 0; i < skinCount; i++) {
+            const randomSkinKey = random.choice(availableSkins);
+            currentShopInventory.push(shopItems.skins[randomSkinKey]);
+            // Удаляем выбранный скин из доступных
+            const index = availableSkins.indexOf(randomSkinKey);
+            availableSkins.splice(index, 1);
+        }
+    }
+	
+    // Добавляем остальные товары...
+    const otherItems = itemKeys.filter(key => key !== 'skins');
+    const itemCount = random.int(3, 5);
     for (let i = 0; i < itemCount; i++) {
-        const randomItemKey = random.choice(itemKeys);
+        const randomItemKey = random.choice(otherItems);
         const item = shopItems[randomItemKey];
         
         if (!currentShopInventory.some(existing => existing.id === item.id)) {
@@ -5758,6 +6108,100 @@ function purchaseItem(item) {
     showNotification(`Куплено: ${item.name}`, 2000);
 }
 
+// ===============================
+// ФУНКЦИИ ДЛЯ СКИНОВ
+// ===============================
+
+// Покупка скина
+function purchaseSkin(skinId) {
+    const skin = heroSkins[skinId];
+    
+    if (!skin) {
+        showNotification('Скин не найден!', 1500);
+        return false;
+    }
+    
+    // Проверяем, есть ли уже скин
+    if (ownedSkins.includes(skinId)) {
+        showNotification('У вас уже есть этот скин!', 1500);
+        return false;
+    }
+    
+    // Проверяем золото
+    if (game.gold < skin.price) {
+        showNotification(`Недостаточно золота! Нужно ${skin.price}🪙`, 1500);
+        return false;
+    }
+    
+    // Списываем золото
+    game.gold -= skin.price;
+    
+    // Добавляем скин в коллекцию
+    ownedSkins.push(skinId);
+    
+    // Автоматически надеваем новый скин
+    currentSkin = skinId;
+    
+    showNotification(`✅ Куплен скин "${skin.name}"!`, 2000);
+    
+    // Обновляем отображение
+    updateStatsDisplay();
+    saveSkinsToStorage();
+    draw();
+    
+    return true;
+}
+
+// Смена скина
+function changeSkin(skinId) {
+    if (!ownedSkins.includes(skinId)) {
+        showNotification('У вас нет этого скина!', 1500);
+        return false;
+    }
+    
+    currentSkin = skinId;
+    showNotification(`Скин изменен на "${heroSkins[skinId].name}"`, 1500);
+    
+    saveSkinsToStorage();
+    draw();
+    return true;
+}
+
+// Сохранение скинов в localStorage
+function saveSkinsToStorage() {
+    try {
+        const skinData = {
+            current: currentSkin,
+            owned: ownedSkins
+        };
+        localStorage.setItem('heroSkins', JSON.stringify(skinData));
+    } catch (e) {
+        console.log('Не удалось сохранить скины');
+    }
+}
+
+// Загрузка скинов из localStorage
+function loadSkinsFromStorage() {
+    try {
+        const saved = localStorage.getItem('heroSkins');
+        if (saved) {
+            const skinData = JSON.parse(saved);
+            
+            // Проверяем, что стандартный скин всегда есть
+            if (!skinData.owned.includes('default')) {
+                skinData.owned.unshift('default');
+            }
+            
+            currentSkin = skinData.current || 'default';
+            ownedSkins = skinData.owned;
+            
+            console.log('Скины загружены:', currentSkin, ownedSkins);
+        }
+    } catch (e) {
+        console.log('Не удалось загрузить скины');
+    }
+}
+
 function openShop() {
     if (game.foundExit) {
         showNotification('Игра завершена!', 1500);
@@ -5809,7 +6253,8 @@ function init() {
         setupCompassControls();
         setupRangedAttackControls();
         setupEscapeButton();
-        
+        // Загружаем скины
+    	loadSkinsFromStorage();
         loadUISettings();
         checkFirstTime();
         
@@ -5879,7 +6324,6 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
-
 
 
 
