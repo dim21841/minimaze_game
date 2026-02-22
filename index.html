@@ -6091,12 +6091,12 @@ function initShop() {
 function generateShopInventory() {
     currentShopInventory = [];
     const itemKeys = Object.keys(shopItems);
-    const skinKeys = Object.keys(shopItems.skins); // Получаем все скины
+    const skinKeys = Object.keys(shopItems.skins);
     
     // Всегда добавляем базовые зелья
     currentShopInventory.push(shopItems.healthPotionSmall);
     
-	// Добавляем 1-2 случайных скина (которых у игрока еще нет)
+    // Добавляем 1-2 случайных скина (которых у игрока еще нет)
     const availableSkins = skinKeys.filter(skinKey => {
         const skinId = shopItems.skins[skinKey].skinId;
         return !ownedSkins.includes(skinId) && skinId !== 'default';
@@ -6104,16 +6104,14 @@ function generateShopInventory() {
     
     if (availableSkins.length > 0) {
         const skinCount = Math.min(2, availableSkins.length);
+        // Перемешиваем массив для случайности
+        const shuffled = [...availableSkins].sort(() => Math.random() - 0.5);
         for (let i = 0; i < skinCount; i++) {
-            const randomSkinKey = random.choice(availableSkins);
-            currentShopInventory.push(shopItems.skins[randomSkinKey]);
-            // Удаляем выбранный скин из доступных
-            const index = availableSkins.indexOf(randomSkinKey);
-            availableSkins.splice(index, 1);
+            currentShopInventory.push(shopItems.skins[shuffled[i]]);
         }
     }
-	
-    // Добавляем остальные товары...
+    
+    // Добавляем остальные товары (кроме скинов)
     const otherItems = itemKeys.filter(key => key !== 'skins');
     const itemCount = random.int(3, 5);
     for (let i = 0; i < itemCount; i++) {
@@ -6126,6 +6124,9 @@ function generateShopInventory() {
             i--;
         }
     }
+    
+    renderShopItems();
+}
     
     renderShopItems();
 }
@@ -6230,9 +6231,33 @@ function purchaseSkin(skinId) {
     saveSkinsToStorage();
     draw();
     
+    // Обновляем магазин, чтобы убрать купленный скин из доступных
+    refreshShopAfterPurchase();
+    
+    // Если селектор скинов открыт, обновляем его
+    if (notification.style.display === 'block' && notificationText.innerHTML.includes('ВЫБОР СКИНА')) {
+        showSkinSelector();
+    }
+    
     return true;
 }
 
+function refreshShopAfterPurchase() {
+    // Удаляем купленный скин из текущего ассортимента магазина
+    currentShopInventory = currentShopInventory.filter(item => {
+        // Если это скин, проверяем, не куплен ли он уже
+        if (item.type === 'skin') {
+            return !ownedSkins.includes(item.skinId);
+        }
+        return true;
+    });
+    
+    // Если магазин открыт, обновляем его отображение
+    if (shopOverlay.style.display === 'flex') {
+        renderShopItems();
+    }
+}
+	
 // Смена скина
 function changeSkin(skinId) {
     if (!ownedSkins.includes(skinId)) {
@@ -6277,12 +6302,22 @@ function loadSkinsFromStorage() {
             ownedSkins = skinData.owned;
             
             console.log('Скины загружены:', currentSkin, ownedSkins);
+        } else {
+            // Если нет сохранений, инициализируем с стандартным скином
+            ownedSkins = ['default'];
+            currentSkin = 'default';
         }
     } catch (e) {
         console.log('Не удалось загрузить скины');
+        ownedSkins = ['default'];
+        currentSkin = 'default';
     }
 }
 
+function isSkinOwned(skinId) {
+    return ownedSkins.includes(skinId);
+}
+	
 function openShop() {
     if (game.foundExit) {
         showNotification('Игра завершена!', 1500);
@@ -6405,6 +6440,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
