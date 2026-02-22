@@ -3790,12 +3790,12 @@ function drawPlayer(pos) {
     ctx.fillText('🦄', left + cellSize/2, top + cellSize/2);  // ← Смайлик
     
     // Оружие (поверх смайлика)
-    //const weapon = game.inventory[game.activeWeapon];
-    //if (weapon) {
-    //    ctx.font = `${cellSize * 0.4}px Arial`;
-    //    ctx.fillStyle = weapon.color;
-    //    ctx.fillText(weapon.symbol, left + cellSize/2 + 10, top + cellSize/2 - 10);
-    //}
+    const weapon = game.inventory[game.activeWeapon];
+    if (weapon) {
+        ctx.font = `${cellSize * 0.4}px Arial`;
+        ctx.fillStyle = weapon.color;
+        ctx.fillText(weapon.symbol, left + cellSize/2 + 10, top + cellSize/2 - 10);
+    }
 }
     
     const weapon = game.inventory[game.activeWeapon];
@@ -6312,6 +6312,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
