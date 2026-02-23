@@ -1214,13 +1214,7 @@
         display: flex;
         animation: escapePulse 2s infinite;
     }
-	
-    .enemy-health-bar {
-        width: 150px !important;
-        height: 12px !important;
-        font-size: 10px !important;
-    }
-
+	    
     @keyframes escapePulse {
         0% { box-shadow: 0 0 15px rgba(255, 100, 100, 0.3); }
         50% { box-shadow: 0 0 25px rgba(255, 100, 100, 0.6); }
@@ -2106,7 +2100,7 @@ function showEnemyHealthBar(enemy) {
     const healthPercent = (enemy.health / enemy.maxHealth) * 100;
     
     enemyFill.style.width = `${healthPercent}%`;
-    enemyText.textContent = `${enemy.type.name}: ${Math.floor(enemy.health)}/${enemy.maxHealth}`;
+    enemyText.textContent = `${enemy.type.name} (${enemy.type.damage}⚔️): ${Math.floor(enemy.health)}/${enemy.maxHealth}`;
     
     // Меняем цвет в зависимости от здоровья
     if (healthPercent > 70) {
@@ -2839,11 +2833,13 @@ function startCombat(enemy) {
     game.selectedEnemy = enemy.id;
     currentCombatEnemy = enemy;
     
+    // ПОКАЗЫВАЕМ ПОЛОСУ ВРАГА
+    showEnemyHealthBar(enemy);
+    
     isCombatLocked = true;
     combatTurn = 0;
     
     updateCombatIndicator();
-    
     autoCombatLoop();
 }
 
@@ -2889,6 +2885,8 @@ function endCombat() {
     combatTurn = 0;
     game.selectedEnemy = null;
     
+    // СКРЫВАЕМ ПОЛОСУ ВРАГА
+    hideEnemyHealthBar();
     hideCombatIndicator();
     hideEscapeButton();
     
@@ -3019,6 +3017,11 @@ function attackEnemy(x, y) {
     const enemy = getEnemyAt(x, y, game.player.floor);
     if (!enemy || enemy.health <= 0) return;
     
+    // Обновляем полосу врага при атаке
+    if (currentCombatEnemy && currentCombatEnemy.id === enemy.id) {
+        showEnemyHealthBar(enemy);
+    }
+    
     const weapon = game.inventory[game.activeWeapon];
     const baseDamage = weapon ? weapon.damage : weapons.fist.damage;
     
@@ -3084,6 +3087,11 @@ function attackEnemy(x, y) {
 
 function enemyAttack(enemy) {
     if (!enemy) return;
+    
+    // Обновляем полосу врага (на случай, если он лечится или что-то меняется)
+    if (currentCombatEnemy && currentCombatEnemy.id === enemy.id) {
+        showEnemyHealthBar(enemy);
+    }
     
     const distance = Math.sqrt(
         Math.pow(enemy.x - game.player.x, 2) + 
@@ -3738,7 +3746,11 @@ function getCurrentCompassTarget() {
 
 function draw() {
     drawMaze();
-    drawEnemyHealthBars();
+    // Обновляем полосу врага, если бой идет
+    if (isCombatLocked && currentCombatEnemy) {
+        showEnemyHealthBar(currentCombatEnemy);
+    }
+    //drawEnemyHealthBars();
     updateUI();
 }
 
@@ -4049,7 +4061,7 @@ function closeSkinSelector() {
     notification.style.display = 'none';
 }
 
-function drawEnemyHealthBars() {
+/*function drawEnemyHealthBars() {
     if (!isCombatLocked || !currentCombatEnemy) return;
     
     const enemy = currentCombatEnemy;
@@ -4106,7 +4118,7 @@ function drawEnemyHealthBars() {
         ctx.strokeRect(barX - 3, barY - 3, barWidth + 6, barHeight + 28);
         ctx.globalAlpha = 1;
     }
-}
+}*/
 
 function drawDamageNumbers() {
     for (let i = game.damageNumbers.length - 1; i >= 0; i--) {
@@ -6603,6 +6615,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
