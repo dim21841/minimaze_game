@@ -271,44 +271,164 @@
             z-index: 90;
         }
         
-        .health-bar {
-            width: 200px;
-            height: 20px;
-            background: rgba(40, 20, 20, 0.8);
-            border: 2px solid #5a3a3a;
-            border-radius: 10px;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-        }
-        
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(to right, #44ff44, #88ff88);
-            border-radius: 8px;
-            transition: width 0.3s;
-            position: relative;
-        }
-        
-        .health-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px black;
-            line-height: 20px;
-        }
-        
-        .inventory {
-            display: flex;
-            gap: 8px;
-            background: rgba(20, 20, 40, 0.8);
-            padding: 10px;
-            border-radius: 10px;
-            border: 2px solid #4a4a5a;
-            backdrop-filter: blur(5px);
-        }
+        /* Панель здоровья игрока (вверху по центру) */
+.player-health-panel {
+    position: absolute;
+    top: 70px; /* Под верхней панелью */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    width: auto;
+    pointer-events: none;
+}
+
+.health-bar {
+    width: 250px;
+    height: 25px;
+    background: rgba(40, 20, 20, 0.9);
+    border: 2px solid #5a3a3a;
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    margin: 0 auto;
+    position: relative;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(to right, #44ff44, #88ff88);
+    border-radius: 10px;
+    transition: width 0.3s;
+    position: relative;
+}
+
+.health-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 3px black;
+    line-height: 25px;
+    left: 0;
+    top: 0;
+    z-index: 2;
+}
+
+/* Панель здоровья врага (под здоровьем игрока) */
+.enemy-health-panel {
+    position: absolute;
+    top: 100px; /* Чуть ниже здоровья игрока (70px + 25px + отступ) */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 89;
+    width: auto;
+    pointer-events: none;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.enemy-health-bar {
+    width: 250px;
+    height: 25px;
+    background: rgba(40, 20, 20, 0.9);
+    border: 2px solid #8a4a4a;
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.enemy-health-fill {
+    height: 100%;
+    background: linear-gradient(to right, #ff4444, #ff8888);
+    border-radius: 10px;
+    transition: width 0.3s;
+}
+
+.enemy-health-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 2px 2px 3px black;
+    line-height: 25px;
+    left: 0;
+    top: 0;
+    z-index: 2;
+}
+
+/* Панель инвентаря (остается внизу) */
+.inventory-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    width: auto;
+}
+
+.inventory {
+    display: flex;
+    gap: 8px;
+    background: rgba(20, 20, 40, 0.8);
+    padding: 10px 15px;
+    border-radius: 15px;
+    border: 2px solid #4a4a5a;
+    backdrop-filter: blur(5px);
+    justify-content: center;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 480px) {
+    .player-health-panel {
+        top: 60px;
+    }
+    
+    .enemy-health-panel {
+        top: 90px; /* 60px + 22px + отступ */
+    }
+    
+    .health-bar, .enemy-health-bar {
+        width: 200px;
+        height: 22px;
+    }
+    
+    .health-text, .enemy-health-text {
+        font-size: 12px;
+        line-height: 22px;
+    }
+    
+    .inventory-panel {
+        bottom: 10px;
+    }
+    
+    .inventory {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+    
+    .inventory-slot {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+}
         
         .inventory-slot {
             width: 40px;
@@ -1118,14 +1238,27 @@
 	<div class="damage-info" id="damageInfo">Урон: 3</div>
     <div class="exit-info" id="exitInfo">Выход: этаж 1</div>
   </div>
-  <div class="hud-panel">
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ - только здоровье игрока -->
+<div class="player-health-panel">
     <div class="health-bar">
-      <div class="health-fill" id="healthFill" style="width: 100%">
-        <div class="health-text" id="healthText">100/100</div>
-      </div>
+        <div class="health-fill" id="healthFill" style="width: 100%">
+            <div class="health-text" id="healthText">100/100</div>
+        </div>
     </div>
+</div>
+
+<!-- Панель врага (будет появляться под здоровьем игрока) -->
+<div class="enemy-health-panel" id="enemyHealthPanel" style="display: none;">
+    <div class="enemy-health-bar">
+        <div class="enemy-health-fill" id="enemyHealthFill" style="width: 100%"></div>
+        <div class="enemy-health-text" id="enemyHealthText">Враг: 100/100</div>
+    </div>
+</div>
+
+<!-- НИЖНЯЯ ПАНЕЛЬ - инвентарь остается на месте -->
+<div class="inventory-panel">
     <div class="inventory" id="inventory"></div>
-  </div>
+</div>
   
   <div class="compass-hud" id="compassHud">
     <div class="collapse-btn" id="compassCollapseBtn" onClick="toggleCompassCollapse()">−</div>
@@ -6436,6 +6569,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
