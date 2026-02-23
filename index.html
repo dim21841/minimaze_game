@@ -2093,6 +2093,40 @@ function saveUISettings() {
     }
 }
 
+function showEnemyHealthBar(enemy) {
+    const enemyPanel = document.getElementById('enemyHealthPanel');
+    const enemyFill = document.getElementById('enemyHealthFill');
+    const enemyText = document.getElementById('enemyHealthText');
+    
+    if (!enemy || enemy.health <= 0) {
+        enemyPanel.style.display = 'none';
+        return;
+    }
+    
+    const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+    
+    enemyFill.style.width = `${healthPercent}%`;
+    enemyText.textContent = `${enemy.type.name}: ${Math.floor(enemy.health)}/${enemy.maxHealth}`;
+    
+    // Меняем цвет в зависимости от здоровья
+    if (healthPercent > 70) {
+        enemyFill.style.background = 'linear-gradient(to right, #44ff44, #88ff88)';
+    } else if (healthPercent > 30) {
+        enemyFill.style.background = 'linear-gradient(to right, #ffaa44, #ffcc44)';
+    } else {
+        enemyFill.style.background = 'linear-gradient(to right, #ff4444, #ff8888)';
+    }
+    
+    enemyPanel.style.display = 'block';
+}
+
+function hideEnemyHealthBar() {
+    const enemyPanel = document.getElementById('enemyHealthPanel');
+    if (enemyPanel) {
+        enemyPanel.style.display = 'none';
+    }
+}
+	
 function loadUISettings() {
     try {
         const saved = localStorage.getItem('mazeUISettings');
@@ -6569,6 +6603,7 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 </body>
 
 </html>
+
 
 
 
