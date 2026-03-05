@@ -376,8 +376,8 @@
 /* Панель инвентаря (остается внизу) */
 .inventory-panel {
     position: absolute;
-    bottom: 20px;
-    left: 50%;
+    bottom: 50px;
+    left: 20px;
     transform: translateX(-50%);
     z-index: 90;
     width: auto;
@@ -1807,7 +1807,7 @@ let ownedSkins = ['default'];
 // КОНФИГУРАЦИЯ
 // ===============================
 const config = {
-    levels: 9,
+    levels: 21,
     levelSize: 25,
     cellSize: 40,
     seed: Date.now(),
@@ -3194,7 +3194,7 @@ function processEnemyKill(enemy) {
     if (goldAmount < 30) goldAmount = 30;
     if (enemy.type.rarity < 3 && goldAmount > 75) goldAmount = 75;
     
-    game.gold += goldAmount;
+    game.gold += goldAmount * 2;
     createGoldEffect(enemy.x, enemy.y, goldAmount);
     
     let rewardMessage = `+${totalXP} опыта`;
