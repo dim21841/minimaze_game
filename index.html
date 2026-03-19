@@ -634,61 +634,7 @@
         .collapse-btn:hover {
             background: rgba(60, 60, 80, 0.9);
         }
-
-        .collapsed {
-            width: auto !important;
-            height: 30px !important;
-            overflow: hidden;
-            padding: 5px !important;
-        }
-
-        .collapsed .collapse-btn {
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .collapsed .map-grid,
-        .collapsed .compass-target:not(:first-child),
-        .collapsed .compass-direction {
-            display: none !important;
-        }
-
-        .mini-map.collapsed {
-            padding: 5px 10px;
-            min-width: 100px;
-            cursor: pointer;
-        }
-
-        .mini-map.collapsed:hover {
-            background: rgba(30, 30, 50, 0.9);
-        }
-
-        .mini-map.collapsed::after {
-            content: "🗺️ Мини-карта";
-            color: #8a8aff;
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .mini-map.collapsed::before {
-            content: "🗺️";
-            font-size: 16px;
-            margin-right: 8px;
-        }
-
-        .compass-hud.collapsed {
-            min-width: 120px;
-        }
-
-        .compass-hud.collapsed::before {
-            content: "🧭";
-            font-size: 16px;
-            margin-right: 8px;
-        }
-        
+                
         .keyboard-hint {
             position: absolute;
             bottom: 10px;
@@ -727,19 +673,20 @@
     .top-panel > div {
         margin: 2px;
     }
-    
+
+       
 	/* Стили для превью скинов */
-.skin-preview {
-    width: 60px;
-    height: 60px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
+	.skin-preview {
+    		width: 60px;
+    		height: 60px;
+    		border-radius: 10px;
+    		display: flex;
+    		align-items: center;
+    		justify-content: center;
+    		font-size: 30px;
+    		cursor: pointer;
+    		transition: all 0.2s;
+	}
 
 .skin-preview:hover {
     transform: scale(1.1);
@@ -837,7 +784,7 @@
     		height: 45px;
             font-size: 20px;
         }
-        
+		        
         .auto-attack-toggle {
             bottom: 130px;
             right: 10px;
@@ -1214,12 +1161,291 @@
         display: flex;
         animation: escapePulse 2s infinite;
     }
-	    
+	
+
     @keyframes escapePulse {
         0% { box-shadow: 0 0 15px rgba(255, 100, 100, 0.3); }
         50% { box-shadow: 0 0 25px rgba(255, 100, 100, 0.6); }
         100% { box-shadow: 0 0 15px rgba(255, 100, 100, 0.3); }
     }
+	
+/* ===== КОМПАС ===== */
+.compass-hud {
+    position: absolute;
+    top: 120px;
+    left: 20px;
+    background: rgba(20, 20, 40, 0.8);
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #4a4a5a;
+    backdrop-filter: blur(5px);
+    flex-direction: column;
+    gap: 8px;
+    z-index: 95;
+    max-width: 200px;
+    transition: all 0.3s ease;
+}
+
+/* Активный компас (есть предмет) */
+.compass-hud.active {
+    display: flex;
+    opacity: 1;
+    filter: none;
+    cursor: pointer;
+}
+
+.compass-hud.active:hover {
+    background: rgba(40, 40, 60, 0.9);
+    border-color: #8a8aff;
+}
+
+/* Неактивный компас (нет предмета) */
+.compass-hud.inactive {
+    display: flex !important;
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    background: rgba(20, 20, 40, 0.5);
+    border: 2px solid #4a4a5a;
+    border-radius: 10px;
+    opacity: 0.5;
+    filter: grayscale(80%);
+    cursor: default !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.compass-hud.inactive::before {
+    content: "🧭";
+    color: #666;
+    font-size: 24px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.compass-hud.inactive > * {
+    display: none !important;
+}
+
+/* Свернутый активный компас */
+.compass-hud.active.collapsed {
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    background: rgba(20, 20, 40, 0.9);
+    border: 2px solid #4a4a5a;
+    border-radius: 10px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.compass-hud.active.collapsed::before {
+    content: "🧭";
+    color: #8a8aff;
+    font-size: 24px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.compass-hud.active.collapsed > *:not(.collapse-btn) {
+    display: none !important;
+}
+
+.compass-hud.active.collapsed .collapse-btn {
+    position: absolute !important;
+    top: -8px !important;
+    right: -8px !important;
+    width: 18px !important;
+    height: 18px !important;
+    background: rgba(40, 40, 60, 0.9);
+    border: 1px solid #5a5a7a;
+    border-radius: 50%;
+    color: #b0b0ff;
+    font-size: 12px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    margin: 0;
+    padding: 0;
+}
+
+/* ===== МИНИ-КАРТА ===== */
+.mini-map {
+    position: absolute;
+    top: 120px;
+    right: 20px;
+    background: rgba(20, 20, 40, 0.8);
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid #4a4a5a;
+    backdrop-filter: blur(5px);
+    z-index: 95;
+    transition: all 0.3s ease;
+}
+
+/* Активная карта (есть предмет) */
+.mini-map.active {
+    display: block;
+    opacity: 1;
+    filter: none;
+    cursor: pointer;
+}
+
+.mini-map.active:hover {
+    background: rgba(40, 40, 60, 0.9);
+    border-color: #8a8aff;
+}
+
+/* Неактивная карта (нет предмета) */
+.mini-map.inactive {
+    display: block !important;
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    background: rgba(20, 20, 40, 0.5);
+    border: 2px solid #4a4a5a;
+    border-radius: 10px;
+    opacity: 0.5;
+    filter: grayscale(80%);
+    cursor: default !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.mini-map.inactive::before {
+    content: "🗺️";
+    color: #666;
+    font-size: 24px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.mini-map.inactive > * {
+    display: none !important;
+}
+
+/* Свернутая активная карта */
+.mini-map.active.collapsed {
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    background: rgba(20, 20, 40, 0.9);
+    border: 2px solid #4a4a5a;
+    border-radius: 10px;
+    display: block !important;
+    position: relative;
+    cursor: pointer;
+}
+
+.mini-map.active.collapsed::before {
+    content: "🗺️";
+    color: #8a8aff;
+    font-size: 24px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.mini-map.active.collapsed > *:not(.collapse-btn) {
+    display: none !important;
+}
+
+.mini-map.active.collapsed .collapse-btn {
+    position: absolute !important;
+    top: -8px !important;
+    right: -8px !important;
+    width: 18px !important;
+    height: 18px !important;
+    background: rgba(40, 40, 60, 0.9);
+    border: 1px solid #5a5a7a;
+    border-radius: 50%;
+    color: #b0b0ff;
+    font-size: 12px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    margin: 0;
+    padding: 0;
+}
+
+/* Кнопка сворачивания */
+.collapse-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background: rgba(40, 40, 60, 0.8);
+    border: 1px solid #5a5a7a;
+    border-radius: 4px;
+    color: #b0b0ff;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    user-select: none;
+}
+
+.collapse-btn:hover {
+    background: rgba(60, 60, 80, 0.9);
+}
+
+.config-btn {
+    position: absolute;
+    top: 130px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+    border: 2px solid #8a8aff;
+    border-radius: 50%;
+    color: #b0b0ff;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(138, 138, 255, 0.3);
+    z-index: 101;
+    user-select: none;
+}
+
+.config-btn:hover {
+    background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+    border-color: #ffff00;
+    color: #ffff00;
+}
+
+@media (max-width: 480px) {
+    .config-btn {
+        top: 130px;
+        left: 20px;
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+    }
+}
+	
     </style>
 </head>
 <body>
@@ -1255,7 +1481,7 @@
 </div>
   
   <div class="compass-hud" id="compassHud">
-    <div class="collapse-btn" id="compassCollapseBtn" onClick="toggleCompassCollapse()">−</div>
+    <div class="collapse-btn" id="compassCollapseBtn">−</div>
     <div style="color:#8a8aff; font-size:14px; font-weight:bold; margin-bottom:5px;">КОМПАС</div>
     <div class="compass-target" data-target="exit">🚩 Выход</div>
     <div class="compass-target" data-target="map">🗺️ Карта</div>
@@ -1315,6 +1541,7 @@
       <div class="menu-btn-item" onClick="changeTheme()">🎨 Смена темы</div>
       <div class="menu-btn-item" onClick="showStats()">📊 Статистика</div>
       <div class="menu-btn-item" onClick="showInstructions()">❓ Как играть</div>
+	  <div class="config-btn" id="configBtn" title="Загрузить конфигурацию (C)" onclick="loadConfigFromFile()">📂</div>
       <div class="menu-btn-item" onClick="toggleMenu()">✕ Продолжить</div>
     </div>
   </div>
@@ -1340,9 +1567,28 @@
 // ===============================
 const tg = window.Telegram.WebApp;
 tg.expand();
-tg.enableClosingConfirmation();
-tg.setHeaderColor('#0a0a14');
-tg.setBackgroundColor('#0a0a14');
+
+// Проверяем версию и доступность функций
+const tgVersion = tg.version || '6.0';
+
+// Безопасное включение функций
+try {
+    if (parseFloat(tgVersion) >= 6.1) {
+        tg.enableClosingConfirmation();
+    }
+} catch (e) {
+    console.log('Closing confirmation not supported');
+}
+
+try {
+    if (parseFloat(tgVersion) >= 6.1) {
+        tg.setHeaderColor('#0a0a14');
+        tg.setBackgroundColor('#0a0a14');
+    }
+} catch (e) {
+    console.log('Header/Background color not supported');
+    document.body.style.backgroundColor = '#0a0a14';
+}
 
 const user = tg.initDataUnsafe?.user;
 if (user) {
@@ -1657,13 +1903,12 @@ const enemies = {
 
 // ===============================
 // СКИНЫ ДЛЯ ГЕРОЯ
-// 🥷 🕵 👽 👮 🧑🏻‍🚀 🧑🏼‍🚒 🧙🏼‍♂️ 👨‍🌾 👨‍✈️ 👷🏼‍♂️ 🤺 🤖
 // ===============================
 const heroSkins = {
     default: {
         id: 'default',
         name: 'Стандартный',
-        symbol: '👤',  // Стандартный смайлик
+        symbol: '👤',
         color: '#4a8aff',
         price: 0,
         description: 'Обычный герой',
@@ -1672,7 +1917,7 @@ const heroSkins = {
     warrior: {
         id: 'warrior',
         name: 'Воин',
-        symbol: '🤺',  // Смайлик воина
+        symbol: '🤺',
         color: '#ff8a00',
         price: 100,
         description: 'Закаленный в боях воин',
@@ -1681,7 +1926,7 @@ const heroSkins = {
     mage: {
         id: 'mage',
         name: 'Маг',
-        symbol: '🧙',  // Смайлик мага
+        symbol: '🧙',
         color: '#aa44ff',
         price: 150,
         description: 'Властелин магии',
@@ -1690,7 +1935,7 @@ const heroSkins = {
     assassin: {
         id: 'assassin',
         name: 'Убийца',
-        symbol: '🥷',  // Смайлик ниндзя
+        symbol: '🥷',
         color: '#44aa44',
         price: 120,
         description: 'Быстрый и смертоносный',
@@ -1699,7 +1944,7 @@ const heroSkins = {
     astroman: {
         id: 'astroman',
         name: 'Космонавт',
-        symbol: '🧑‍🚀',  // Смайлик космонавта
+        symbol: '🧑‍🚀',
         color: '#888888',
         price: 200,
         description: 'В тяжелых доспехах',
@@ -1708,7 +1953,7 @@ const heroSkins = {
     ufo: {
         id: 'ufo',
         name: 'Инопланетянин',
-        symbol: '👽',  // Смайлик пришельца
+        symbol: '👽',
         color: '#cd5c5c',
         price: 180,
         description: 'Дикий и сильный',
@@ -1717,7 +1962,7 @@ const heroSkins = {
     policeman: {
         id: 'policeman',
         name: 'Полицейский',
-        symbol: '👮',  // Смайлик полицейского
+        symbol: '👮',
         color: '#ffffff',
         price: 250,
         description: 'Хранитель порядка',
@@ -1726,7 +1971,7 @@ const heroSkins = {
     detectiv: {
         id: 'detectiv',
         name: 'Детектив',
-        symbol: '🕵️',  // Смайлик детектива
+        symbol: '🕵️',
         color: '#ff4444',
         price: 300,
         description: 'Исчадие ада',
@@ -1735,7 +1980,7 @@ const heroSkins = {
     angel: {
         id: 'angel',
         name: 'Ангел',
-        symbol: '😇',  // Смайлик ангела
+        symbol: '😇',
         color: '#ffffaa',
         price: 350,
         description: 'Небесный посланник',
@@ -1744,7 +1989,7 @@ const heroSkins = {
     ghost: {
         id: 'ghost',
         name: 'Призрак',
-        symbol: '👻',  // Смайлик призрака
+        symbol: '👻',
         color: '#e0e0ff',
         price: 220,
         description: 'Прозрачный дух',
@@ -1753,7 +1998,7 @@ const heroSkins = {
     fireman: {
         id: 'fireman',
         name: 'Пожарный',
-        symbol: '👨‍🚒',  // Смайлик пожарного
+        symbol: '👨‍🚒',
         color: '#ff8a00',
         price: 220,
         description: 'Борец с огнем',
@@ -1762,7 +2007,7 @@ const heroSkins = {
     farmman: {
         id: 'farmman',
         name: 'Фермер',
-        symbol: '👨‍🌾',  // Смайлик фермера
+        symbol: '👨‍🌾',
         color: '#8B4513',
         price: 220,
         description: 'Труженик полей',
@@ -1771,7 +2016,7 @@ const heroSkins = {
     engineer: {
         id: 'engineer',
         name: 'Инженер',
-        symbol: '👷',  // Смайлик инженера
+        symbol: '👷',
         color: '#FFD700',
         price: 220,
         description: 'Строитель',
@@ -1780,7 +2025,7 @@ const heroSkins = {
     robot: {
         id: 'robot',
         name: 'Робот',
-        symbol: '🤖',  // Смайлик робота
+        symbol: '🤖',
         color: '#cccccc',
         price: 220,
         description: 'Механический помощник',
@@ -1789,7 +2034,7 @@ const heroSkins = {
     pilot: {
         id: 'pilot',
         name: 'Пилот',
-        symbol: '👨‍✈️',  // Смайлик пилота
+        symbol: '👨‍✈️',
         color: '#4169E1',
         price: 220,
         description: 'Покоритель неба',
@@ -1807,7 +2052,7 @@ let ownedSkins = ['default'];
 // КОНФИГУРАЦИЯ
 // ===============================
 const config = {
-    levels: 21,
+    levels: 9,
     levelSize: 25,
     cellSize: 40,
     seed: Date.now(),
@@ -1875,6 +2120,7 @@ const game = {
     maxCombo: 0,
     bestKillStreak: 0,
 	shopOpenCount: 0,
+	lastShopUpdate: 0,
     achievements: {
         firstBlood: false,
         comboMaster: false,
@@ -1961,10 +2207,8 @@ function hapticFeedback(style = 'medium') {
     }
 }
 
-// Сохранение в облако
-function saveGameToCloud() {
-    if (!tg || !tg.CloudStorage) return;
-    
+// Сохранение в localStorage вместо CloudStorage (так как CloudStorage не поддерживается)
+function saveGameToLocal() {
     try {
         const gameState = {
             player: game.player,
@@ -1986,78 +2230,204 @@ function saveGameToCloud() {
             playerArrows: playerArrows || 0
         };
         
-        tg.CloudStorage.setItem('mazeSave', JSON.stringify(gameState), (error) => {
-            if (error) {
-                console.log('Ошибка сохранения:', error);
-            } else {
-                console.log('Игра сохранена в облако');
-            }
-        });
+        localStorage.setItem('mazeSave', JSON.stringify(gameState));
+        console.log('Игра сохранена в localStorage');
     } catch (e) {
         console.log('Error saving game:', e);
     }
 }
 
-// Загрузка из облака
-function loadGameFromCloud() {
-    if (!tg || !tg.CloudStorage) {
-        console.log('CloudStorage не доступен');
-        return;
+// Загрузка из localStorage
+function loadGameFromLocal() {
+    try {
+        const saved = localStorage.getItem('mazeSave');
+        if (!saved) {
+            console.log('Нет сохранения');
+            return;
+        }
+        
+        const gameState = JSON.parse(saved);
+        
+        if (gameState.player) game.player = gameState.player;
+        if (gameState.gold !== undefined) game.gold = gameState.gold;
+        if (gameState.health !== undefined) config.playerHealth = gameState.health;
+        if (gameState.maxHealth !== undefined) config.playerMaxHealth = gameState.maxHealth;
+        if (gameState.level !== undefined) config.playerLevel = gameState.level;
+        if (gameState.xp !== undefined) config.playerXP = gameState.xp;
+        if (gameState.steps !== undefined) game.steps = gameState.steps;
+        if (gameState.activeWeapon !== undefined) game.activeWeapon = gameState.activeWeapon;
+        if (gameState.totalKills !== undefined) game.totalKills = gameState.totalKills;
+        if (gameState.achievements) game.achievements = gameState.achievements;
+        if (gameState.discoveredRooms) game.discoveredRooms = new Set(gameState.discoveredRooms);
+        
+        game.hasMap = gameState.hasMap || false;
+        game.hasCompass = gameState.hasCompass || false;
+        game.hasSchematic = gameState.hasSchematic || false;
+        torchUses = gameState.torchUses || 0;
+        playerArrows = gameState.playerArrows || 0;
+        
+        if (gameState.inventory) {
+            game.inventory = [weapons.fist, null, null, null];
+            gameState.inventory.forEach((weaponName, index) => {
+                if (weaponName) {
+                    const weapon = Object.values(weapons).find(w => w.name === weaponName);
+                    if (weapon) game.inventory[index] = weapon;
+                }
+            });
+        }
+        
+        showNotification('Игра загружена!', 2000);
+        updateUI();
+        updateInventoryDisplay();
+        draw();
+        updateMiniMap();
+        updateCompass();
+        
+    } catch (e) {
+        console.log('Ошибка загрузки:', e);
     }
-    
-    tg.CloudStorage.getItem('mazeSave', (error, value) => {
-        if (error) {
-            console.log('Ошибка загрузки из облака:', error);
-            return;
+}
+
+// ===============================
+// ФУНКЦИИ ЗАГРУЗКИ КОНФИГУРАЦИИ
+// ===============================
+
+// Функция загрузки конфигурации из JSON
+function loadGameConfig(jsonConfig) {
+    try {
+        const loadedConfig = JSON.parse(jsonConfig);
+        
+        // Применяем глобальные настройки
+        if (loadedConfig.global) {
+            config.levels = loadedConfig.global.levels || config.levels;
+            config.levelSize = loadedConfig.global.levelSize || config.levelSize;
+            config.cellSize = loadedConfig.global.cellSize || config.cellSize;
+            config.currentTheme = loadedConfig.global.currentTheme || config.currentTheme;
+            config.fogDistance = loadedConfig.global.fogDistance || config.fogDistance;
         }
         
-        if (!value) {
-            console.log('Нет сохранения в облаке');
-            return;
-        }
-        
-        try {
-            const gameState = JSON.parse(value);
+        // Применяем настройки игрока
+        if (loadedConfig.player) {
+            config.playerHealth = loadedConfig.player.health || config.playerHealth;
+            config.playerMaxHealth = loadedConfig.player.maxHealth || config.playerMaxHealth;
+            config.playerDamage = loadedConfig.player.damage || config.playerDamage;
+            config.playerDefense = loadedConfig.player.defense || config.playerDefense;
+            config.playerLevel = loadedConfig.player.level || config.playerLevel;
+            game.gold = loadedConfig.player.gold || game.gold;
+            playerArrows = loadedConfig.player.arrows || playerArrows;
             
-            if (gameState.player) game.player = gameState.player;
-            if (gameState.gold !== undefined) game.gold = gameState.gold;
-            if (gameState.health !== undefined) config.playerHealth = gameState.health;
-            if (gameState.maxHealth !== undefined) config.playerMaxHealth = gameState.maxHealth;
-            if (gameState.level !== undefined) config.playerLevel = gameState.level;
-            if (gameState.xp !== undefined) config.playerXP = gameState.xp;
-            if (gameState.steps !== undefined) game.steps = gameState.steps;
-            if (gameState.activeWeapon !== undefined) game.activeWeapon = gameState.activeWeapon;
-            if (gameState.totalKills !== undefined) game.totalKills = gameState.totalKills;
-            if (gameState.achievements) game.achievements = gameState.achievements;
-            if (gameState.discoveredRooms) game.discoveredRooms = new Set(gameState.discoveredRooms);
-            
-            game.hasMap = gameState.hasMap || false;
-            game.hasCompass = gameState.hasCompass || false;
-            game.hasSchematic = gameState.hasSchematic || false;
-            torchUses = gameState.torchUses || 0;
-            playerArrows = gameState.playerArrows || 0;
-            
-            if (gameState.inventory) {
-                game.inventory = [weapons.fist, null, null, null];
-                gameState.inventory.forEach((weaponName, index) => {
-                    if (weaponName) {
-                        const weapon = Object.values(weapons).find(w => w.name === weaponName);
-                        if (weapon) game.inventory[index] = weapon;
+            // Загружаем инвентарь, если есть
+            if (loadedConfig.player.inventory) {
+                loadedConfig.player.inventory.forEach((weaponId, index) => {
+                    if (weaponId && weapons[weaponId]) {
+                        game.inventory[index] = weapons[weaponId];
                     }
                 });
             }
-            
-            showNotification('Игра загружена из облака!', 2000);
-            updateUI();
-            updateInventoryDisplay();
-            draw();
-            updateMiniMap();
-            updateCompass();
-            
-        } catch (e) {
-            console.log('Ошибка парсинга сохранения:', e);
         }
-    });
+        
+        // Заменяем врагов
+        if (loadedConfig.enemies) {
+            for (let key in enemies) delete enemies[key];
+            Object.assign(enemies, loadedConfig.enemies);
+        }
+        
+        // Заменяем оружие
+        if (loadedConfig.weapons) {
+            for (let key in weapons) delete weapons[key];
+            Object.assign(weapons, loadedConfig.weapons);
+        }
+        
+        // Заменяем предметы
+        if (loadedConfig.items) {
+            for (let key in items) delete items[key];
+            Object.assign(items, loadedConfig.items);
+        }
+        
+        // Загружаем скины
+        if (loadedConfig.skins) {
+            for (let key in heroSkins) delete heroSkins[key];
+            Object.assign(heroSkins, loadedConfig.skins);
+            
+            ownedSkins = ['default'];
+            Object.entries(loadedConfig.skins).forEach(([id, skin]) => {
+                if (skin.owned && !ownedSkins.includes(id)) {
+                    ownedSkins.push(id);
+                }
+            });
+        }
+        
+        // Загружаем товары магазина
+        if (loadedConfig.shop) {
+            for (let key in shopItems) delete shopItems[key];
+            Object.assign(shopItems, loadedConfig.shop);
+            
+            // Перегенерируем ассортимент
+            if (typeof generateShopInventory === 'function') {
+                generateShopInventory();
+            }
+        }
+        
+        // Применяем настройки баланса
+        if (loadedConfig.balance) {
+            config.critChance = (loadedConfig.balance.critChance || 10) / 100;
+            config.critMultiplier = loadedConfig.balance.critMultiplier || 1.5;
+            config.healthRegenPerKill = loadedConfig.balance.healthRegenPerKill || 5;
+            config.xpToNextLevel = loadedConfig.balance.xpToNextLevel || 100;
+            config.damageBonusPerLevel = loadedConfig.balance.damageBonusPerLevel || 0.5;
+            config.defenseBonusPerLevel = loadedConfig.balance.defenseBonusPerLevel || 0.3;
+            config.xpMultiplier = loadedConfig.balance.xpMultiplier || 1.0;
+            config.comboTimeout = loadedConfig.balance.comboTimeout || 3000;
+        }
+		
+        // Обновляем интерфейс
+        updateUI();
+        updateInventoryDisplay();
+        updateDamageInfo();
+        draw();
+        
+        showNotification('✅ Конфигурация загружена!', 2000);
+        console.log('Конфигурация успешно загружена');
+        
+        // Сохраняем в localStorage для будущих игр
+        saveGameToLocal();
+        saveUISettings();
+	saveConfigToStorage(jsonConfig);
+        
+    } catch (e) {
+        console.error('Ошибка загрузки конфигурации:', e);
+        showNotification('❌ Ошибка загрузки конфигурации', 3000);
+    }
+}
+
+// Сохранение конфигурации в localStorage
+function saveConfigToStorage(configJson) {
+    try {
+        localStorage.setItem('mazeCustomConfig', configJson);
+        console.log('Конфигурация сохранена в localStorage');
+    } catch (e) {
+        console.log('Ошибка сохранения конфигурации:', e);
+    }
+}
+
+// Загрузка из файла
+function loadConfigFromFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            loadGameConfig(e.target.result);
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
 }
 
 // ===============================
@@ -2813,7 +3183,7 @@ function movePlayer(dx, dy) {
             checkEnemyAttacks();
         }
         
-        saveGameToCloud();
+        saveGameToLocal();
         
         return true;
     }
@@ -3194,7 +3564,7 @@ function processEnemyKill(enemy) {
     if (goldAmount < 30) goldAmount = 30;
     if (enemy.type.rarity < 3 && goldAmount > 75) goldAmount = 75;
     
-    game.gold += goldAmount * 2;
+    game.gold += goldAmount;
     createGoldEffect(enemy.x, enemy.y, goldAmount);
     
     let rewardMessage = `+${totalXP} опыта`;
@@ -3211,7 +3581,7 @@ function processEnemyKill(enemy) {
     
     checkLevelUp();
     updateStatsDisplay();
-    saveGameToCloud();
+    saveGameToLocal();
     saveUISettings();
 }
 
@@ -3288,32 +3658,32 @@ function collectItem(item) {
     hapticFeedback('light');
     
     if (item.type.type === 'map') {
-        game.hasMap = true;
-        config.showMap = true;
-        updateMiniMap();
-        draw();
-        
-        showNotification('🎉 Найдена карта! Теперь видна вся карта этажа\n🗺️ Карта автоматически включена', 2500);
-        return;
-    }
+    game.hasMap = true;
+    config.showMap = true;
+    updateMiniMap();
+    draw();
     
-    if (item.type.type === 'schematic') {
-        game.hasSchematic = true;
-        config.showSchematic = true;
-        updateMiniMap();
-        
-        showNotification('🎉 Найдена схема! Открыта мини-карта\n📋 Схема автоматически включена', 2500);
-        return;
-    }
+    showNotification('🎉 Найдена карта! Теперь видна вся карта этажа\n🗺️ Карта автоматически включена', 2500);
+    return;
+}
+
+if (item.type.type === 'schematic') {
+    game.hasSchematic = true;
+    config.showSchematic = true;
+    updateMiniMap();
     
-    if (item.type.type === 'compass') {
-        game.hasCompass = true;
-        config.showCompass = true;
-        setupCompassControls();
-        updateCompass();
-        showNotification('🎉 Найден магический компас! Выберите цель для навигации\n🧭 Компас автоматически включен', 2500);
-        return;
-    }
+    showNotification('🎉 Найдена схема! Открыта мини-карта\n📋 Схема автоматически включена', 2500);
+    return;
+}
+
+if (item.type.type === 'compass') {
+    game.hasCompass = true;
+    config.showCompass = true;
+    setupCompassControls();
+    updateCompass();
+    showNotification('🎉 Найден магический компас! Выберите цель для навигации\n🧭 Компас автоматически включен', 2500);
+    return;
+}
     
     if (item.type.type === 'gold') {
         game.gold += item.type.value;
@@ -3520,7 +3890,6 @@ function newGame() {
     
     hideCombatIndicator();
     hideEscapeButton();
-    generateShopInventory();
     
     game.achievements = {
         firstBlood: false,
@@ -3603,19 +3972,18 @@ function toggleCompassCollapse() {
         compassHud.classList.add('collapsed');
         collapseBtn.textContent = '+';
         collapseBtn.title = 'Развернуть компас';
-        
-        const target = getCurrentCompassTarget();
-        if (target) {
-            showNotification(`Путь к ${target.name} отмечен на карте`, 2000);
-        }
     } else {
         compassHud.classList.remove('collapsed');
         collapseBtn.textContent = '−';
         collapseBtn.title = 'Свернуть компас';
     }
     
-    draw();
+    // Сохраняем состояние
     saveUISettings();
+    
+    // Обновляем отображение
+    updateCompass();
+    draw();
 }
 
 function toggleMapCollapse() {
@@ -3633,6 +4001,7 @@ function toggleMapCollapse() {
         collapseBtn.title = 'Свернуть карту';
     }
     
+    // Сохраняем состояние
     saveUISettings();
 }
 
@@ -3750,7 +4119,6 @@ function draw() {
     if (isCombatLocked && currentCombatEnemy) {
         showEnemyHealthBar(currentCombatEnemy);
     }
-    //drawEnemyHealthBars();
     updateUI();
 }
 
@@ -3997,10 +4365,10 @@ function drawPlayer(pos) {
     ctx.fill();
     
     // Рисуем героя как смайлик
-    ctx.font = `${cellSize * 0.8}px Arial, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif`;  // Размер смайлика с поддержкой эмодзи
+    ctx.font = `${cellSize * 0.8}px Arial, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = skin.color;  // Цвет смайлика из скина
+    ctx.fillStyle = skin.color;
     ctx.fillText(skin.symbol, left + cellSize/2, top + cellSize/2);
     
     const weapon = game.inventory[game.activeWeapon];
@@ -4060,65 +4428,6 @@ function showSkinSelector() {
 function closeSkinSelector() {
     notification.style.display = 'none';
 }
-
-/*function drawEnemyHealthBars() {
-    if (!isCombatLocked || !currentCombatEnemy) return;
-    
-    const enemy = currentCombatEnemy;
-    const healthPercent = (enemy.health / enemy.maxHealth) * 100;
-    
-    const healthBar = document.querySelector('.health-bar');
-    if (!healthBar) return;
-    
-    const rect = healthBar.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
-    const barX = rect.left - canvasRect.left;
-    const barY = rect.top - canvasRect.top - 50;
-    
-    const barWidth = rect.width;
-    const barHeight = 20;
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(barX - 5, barY - 5, barWidth + 10, barHeight + 25);
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px Arial';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`⚔️ ${enemy.type.name}:`, barX, barY);
-    
-    ctx.fillStyle = 'rgba(255, 50, 50, 0.3)';
-    ctx.fillRect(barX, barY + 20, barWidth, barHeight);
-    
-    if (healthPercent > 70) {
-        ctx.fillStyle = '#44ff44';
-    } else if (healthPercent > 30) {
-        ctx.fillStyle = '#ffaa44';
-    } else {
-        ctx.fillStyle = '#ff4444';
-    }
-    
-    ctx.fillRect(barX, barY + 20, barWidth * healthPercent / 100, barHeight);
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(
-        `${Math.floor(enemy.health)}/${enemy.maxHealth}`,
-        barX + barWidth/2,
-        barY + 20 + barHeight/2
-    );
-    
-    if (isCombatLocked) {
-        const pulse = Math.sin(Date.now() * 0.005) * 0.2 + 0.8;
-        ctx.globalAlpha = pulse * 0.3;
-        ctx.strokeStyle = '#ffff00';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(barX - 3, barY - 3, barWidth + 6, barHeight + 28);
-        ctx.globalAlpha = 1;
-    }
-}*/
 
 function drawDamageNumbers() {
     for (let i = game.damageNumbers.length - 1; i >= 0; i--) {
@@ -4424,27 +4733,47 @@ function updateInventoryDisplay() {
 }
 
 function updateMiniMap() {
-    const shouldShow = (game.hasMap && config.showMap) || (game.hasSchematic && config.showSchematic);
-    
-    if (!shouldShow) {
-        miniMap.style.display = 'none';
-        return;
-    }
-    
+    // Всегда показываем карту, но с разным состоянием
     miniMap.style.display = 'block';
     
-    if (!miniMap.querySelector('.collapse-btn')) {
-        const collapseBtn = document.createElement('div');
+    // Обновляем классы активности
+    const shouldShow = (game.hasMap && config.showMap) || (game.hasSchematic && config.showSchematic);
+    
+    if (shouldShow) {
+        miniMap.classList.remove('inactive');
+        miniMap.classList.add('active');
+    } else {
+        miniMap.classList.add('inactive');
+        miniMap.classList.remove('active');
+        return; // Если нет карты, не показываем содержимое
+    }
+    
+    // Проверяем, есть ли уже кнопка
+    let collapseBtn = miniMap.querySelector('.collapse-btn');
+    if (!collapseBtn) {
+        collapseBtn = document.createElement('div');
         collapseBtn.className = 'collapse-btn';
-        collapseBtn.textContent = mapCollapsed ? '+' : '−';
-        collapseBtn.onclick = toggleMapCollapse;
-        collapseBtn.title = mapCollapsed ? 'Развернуть карту' : 'Свернуть карту';
         miniMap.insertBefore(collapseBtn, miniMap.firstChild);
     }
     
+    // Обновляем текст и обработчик кнопки
+    collapseBtn.textContent = mapCollapsed ? '+' : '−';
+    collapseBtn.title = mapCollapsed ? 'Развернуть карту' : 'Свернуть карту';
+    collapseBtn.onclick = function(e) {
+        e.stopPropagation();
+        toggleMapCollapse();
+    };
+    
     if (mapCollapsed) {
-        return;
+    // Очищаем содержимое, но сохраняем кнопку
+    const children = miniMap.children;
+    for (let i = children.length - 1; i >= 0; i--) {
+        if (!children[i].classList.contains('collapse-btn')) {
+            miniMap.removeChild(children[i]);
+        }
     }
+    return;
+}
     
     const floor = game.player.floor;
     const level = game.levels[floor];
@@ -4505,27 +4834,43 @@ function updateMiniMap() {
     }
     
     html += '</div>';
-    miniMap.innerHTML = html;
     
-    const collapseBtn = document.createElement('div');
-    collapseBtn.className = 'collapse-btn';
-    collapseBtn.textContent = mapCollapsed ? '+' : '−';
-    collapseBtn.onclick = toggleMapCollapse;
-    collapseBtn.title = mapCollapsed ? 'Развернуть карту' : 'Свернуть карту';
+    // Сохраняем кнопку и обновляем содержимое
+    miniMap.innerHTML = html;
     miniMap.insertBefore(collapseBtn, miniMap.firstChild);
 }
 
 function updateCompass() {
-    if (!config.showCompass || !game.hasCompass) {
-        compassHud.style.display = 'none';
-        return;
-    }
-    
+    // Всегда показываем компас, но с разным состоянием
     compassHud.style.display = 'flex';
     
-    if (compassCollapsed) {
-        return;
+    // Обновляем классы активности
+    if (game.hasCompass) {
+        compassHud.classList.remove('inactive');
+        compassHud.classList.add('active');
+    } else {
+        compassHud.classList.add('inactive');
+        compassHud.classList.remove('active');
+        return; // Если нет компаса, не показываем содержимое
     }
+    
+    // Обновляем кнопку сворачивания
+    const collapseBtn = compassHud.querySelector('.collapse-btn');
+    if (collapseBtn) {
+        collapseBtn.textContent = compassCollapsed ? '+' : '−';
+        collapseBtn.title = compassCollapsed ? 'Развернуть компас' : 'Свернуть компас';
+    }
+    
+    if (compassCollapsed) {
+    // Очищаем содержимое, но сохраняем кнопку
+    const children = compassHud.children;
+    for (let i = children.length - 1; i >= 0; i--) {
+        if (!children[i].classList.contains('collapse-btn')) {
+            compassHud.removeChild(children[i]);
+        }
+		}
+		return;
+	}
     
     let targetX, targetY, targetName;
     let targetType = 'item';
@@ -4780,11 +5125,9 @@ function showInstructions() {
         • I - статистика<br>
         • ESC/M - меню<br><br>
         
-        <div style="margin-bottom:10px;"><b>ОСОБЫЕ ВОЗМОЖНОСТИ:</b></div>
-        • Находите 🗺️ Карту чтобы видеть весь этаж<br>
-        • Находите 🧭 Компас для навигации к целям<br>
-        • Автоатака срабатывает при подходе к врагам<br>
-        • Комбо-система: убивайте врагов быстро для бонусов<br><br>
+        <div style="margin-bottom:10px;"><b>ЗАГРУЗКА КОНФИГУРАЦИИ:</b></div>
+        • <button onclick="loadConfigFromFile()" style="background: linear-gradient(to bottom, #2a2a4a, #1a1a3a); border: 2px solid #8a8aff; border-radius: 5px; padding: 8px 15px; color: #fff; cursor: pointer; margin: 5px 0;">📥 Загрузить JSON конфигурацию</button><br>
+        • Конфигурация загружается из JSON файла, созданного в редакторе<br><br>
         
         <div style="color:#64ff64; font-weight:bold;">Удачи в лабиринте!</div>
         </div>
@@ -4884,7 +5227,7 @@ function activateTorch() {
     
     updateInventoryDisplay();
     saveUISettings();
-    saveGameToCloud();
+    saveGameToLocal();
     
     updateMiniMap();
     draw();
@@ -5078,76 +5421,102 @@ function setupTelegramApp() {
         
         expandSequence();
         
-        // Настройка цветов
-        tg.setHeaderColor('#0a0a14');
-        tg.setBackgroundColor('#0a0a14');
+        // Настройка цветов (с проверкой версии)
+        try {
+            if (tg.version >= '6.1') {
+                tg.setHeaderColor('#0a0a14');
+                tg.setBackgroundColor('#0a0a14');
+            } else {
+                document.body.style.backgroundColor = '#0a0a14';
+            }
+        } catch (e) {
+            document.body.style.backgroundColor = '#0a0a14';
+        }
         
-        // Скрываем кнопки
-        tg.MainButton.hide();
-        tg.BackButton.hide();
+        // Скрываем кнопки (с проверкой)
+        try {
+            tg.MainButton.hide();
+            tg.BackButton.hide();
+        } catch (e) {
+            console.log('BackButton not supported');
+        }
         
-        // Блокируем свайпы
-        tg.disableVerticalSwipes();
+        // Блокируем свайпы (с проверкой)
+        try {
+            if (tg.version >= '6.1') {
+                tg.disableVerticalSwipes();
+            }
+        } catch (e) {
+            console.log('disableVerticalSwipes not supported');
+        }
         
         console.log('Telegram настроен');
     }
 }
 	
 function updateBackButton() {
-    if (menuOverlay.style.display === 'flex' || shopOverlay.style.display === 'flex') {
-        tg.BackButton.show();
-    } else {
-        tg.BackButton.hide();
+    try {
+        if (menuOverlay.style.display === 'flex' || shopOverlay.style.display === 'flex') {
+            tg.BackButton.show();
+        } else {
+            tg.BackButton.hide();
+        }
+    } catch (e) {
+        console.log('BackButton not supported');
     }
 }
 
 function setupTelegramIntegration() {
-    tg.BackButton.onClick(() => {
-        if (menuOverlay.style.display === 'flex') {
-            toggleMenu();
-        } else if (shopOverlay.style.display === 'flex') {
-            closeShop();
-        } else {
-            tg.close();
-        }
-    });
+    try {
+        tg.BackButton.onClick(() => {
+            if (menuOverlay.style.display === 'flex') {
+                toggleMenu();
+            } else if (shopOverlay.style.display === 'flex') {
+                closeShop();
+            } else {
+                tg.close();
+            }
+        });
 
-    const originalToggleMenu = toggleMenu;
-    const originalOpenShop = openShop;
-    const originalCloseShop = closeShop;
+        const originalToggleMenu = toggleMenu;
+        const originalOpenShop = openShop;
+        const originalCloseShop = closeShop;
 
-    window.toggleMenu = function() {
-        originalToggleMenu();
-        updateBackButton();
-    };
+        window.toggleMenu = function() {
+            originalToggleMenu();
+            updateBackButton();
+        };
 
-    window.openShop = function() {
-        originalOpenShop();
-        tg.BackButton.show();
-    };
+        window.openShop = function() {
+            originalOpenShop();
+            updateBackButton();
+        };
 
-    window.closeShop = function() {
-        originalCloseShop();
-        tg.BackButton.hide();
-    };
+        window.closeShop = function() {
+            originalCloseShop();
+            updateBackButton();
+        };
 
-    tg.MainButton.setText('МЕНЮ');
-    tg.MainButton.setParams({
-        color: '#8a8aff',
-        text_color: '#ffffff'
-    });
-    
-    tg.MainButton.onClick(() => {
-        if (menuOverlay.style.display === 'flex') {
-            toggleMenu();
-        } else if (shopOverlay.style.display === 'flex') {
-            closeShop();
-        } else {
-            toggleMenu();
-        }
-    });
-    
-    tg.MainButton.show();
+        tg.MainButton.setText('МЕНЮ');
+        tg.MainButton.setParams({
+            color: '#8a8aff',
+            text_color: '#ffffff'
+        });
+        
+        tg.MainButton.onClick(() => {
+            if (menuOverlay.style.display === 'flex') {
+                toggleMenu();
+            } else if (shopOverlay.style.display === 'flex') {
+                closeShop();
+            } else {
+                toggleMenu();
+            }
+        });
+        
+        tg.MainButton.show();
+    } catch (e) {
+        console.log('Telegram integration error:', e);
+    }
 }
 
 // ===============================
@@ -5425,6 +5794,9 @@ function setupKeyboardControls() {
         }
         
         switch(e.key) {
+			case 'c': case 'C': case 'с': case 'С':
+				loadConfigFromFile();
+				break;
             case 'w': case 'W': case 'ц': case 'Ц': case 'ArrowUp':
                 movePlayer(0, -1);
                 break;
@@ -5590,7 +5962,7 @@ const shopItems = {
             showNotification('+20 HP!', 1500);
             updateUI();
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     healthPotionLarge: {
@@ -5606,7 +5978,7 @@ const shopItems = {
             showNotification('+50 HP!', 1500);
             updateUI();
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     strengthPotion: {
@@ -5622,7 +5994,7 @@ const shopItems = {
             config.buffs.strength.duration = 10;
             showNotification('+5 к урону на 10 шагов!', 1500);
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     shield: {
@@ -5638,7 +6010,7 @@ const shopItems = {
             config.buffs.defense.duration = 10;
             showNotification('+3 к защите на 10 шагов!', 1500);
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     speedBoots: {
@@ -5656,7 +6028,7 @@ const shopItems = {
             updateDiscoveredRooms();
             draw();
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     mapReveal: {
@@ -5692,7 +6064,7 @@ const shopItems = {
             updateMiniMap();
             draw();
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     compassReveal: {
@@ -5711,7 +6083,7 @@ const shopItems = {
                 updateCompass();
                 showNotification('Компас куплен! Включен автоматически.', 2000);
                 hapticFeedback('success');
-                saveGameToCloud();
+                saveGameToLocal();
             } else {
                 showNotification('У вас уже есть компас!', 1500);
             }
@@ -5758,7 +6130,7 @@ const shopItems = {
                 
                 showNotification(`🌀 Телепорт! Этаж ${targetFloor + 1}`, 2500);
                 hapticFeedback('success');
-                saveGameToCloud();
+                saveGameToLocal();
             } else {
                 showNotification('Свиток не сработал!', 1500);
             }
@@ -5779,7 +6151,7 @@ const shopItems = {
                 updateInventoryDisplay();
                 showNotification(`${weapon.name} усилен! Урон: ${weapon.damage}`, 2000);
                 hapticFeedback('success');
-                saveGameToCloud();
+                saveGameToLocal();
             } else {
                 showNotification('Сначала выберите оружие!', 1500);
             }
@@ -5799,7 +6171,7 @@ const shopItems = {
             updateUI();
             showNotification('Максимальное здоровье увеличено на 25!', 2000);
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     torch: {
@@ -5814,7 +6186,7 @@ const shopItems = {
             addToInventory(items.torch);
             showNotification('Получен магический факел! Используйте его для освещения пути.', 2000);
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     dagger: {
@@ -5852,7 +6224,7 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Кинжал!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     sword: {
@@ -5890,7 +6262,7 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Меч!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     axe: {
@@ -5928,7 +6300,7 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Топор!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     magicStaff: {
@@ -5966,7 +6338,7 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Посох!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     legendary: {
@@ -6004,7 +6376,7 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Легендарный!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     bow: {
@@ -6042,7 +6414,7 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на лук!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
     arrows: {
@@ -6057,10 +6429,9 @@ const shopItems = {
             addToInventory(items.arrows);
             showNotification('Получено 5 стрел для лука!', 2000);
             hapticFeedback('success');
-            saveGameToCloud();
+            saveGameToLocal();
         }
     },
-	// Добавьте в shopItems (после существующих товаров)
 skins: {
     warrior: {
         id: 'skin_warrior',
@@ -6252,8 +6623,6 @@ let currentShopInventory = [];
 function initShop() {
     shopBtn.addEventListener('click', openShop);
     
-    generateShopInventory();
-    
     document.addEventListener('keydown', (e) => {
         if (e.key === 'b' || e.key === 'B' || e.key === 'и' || e.key === 'И') {
             if (!shopOverlay.style.display || shopOverlay.style.display === 'none') {
@@ -6266,23 +6635,216 @@ function initShop() {
     });
 }
 
+// Покупка скина
+function purchaseSkin(skinId) {
+    const skin = heroSkins[skinId];
+    
+    if (!skin) {
+        showNotification('Скин не найден!', 1500);
+        return false;
+    }
+    
+    // Проверяем, есть ли уже скин
+    if (ownedSkins.includes(skinId)) {
+        showNotification('У вас уже есть этот скин!', 1500);
+        return false;
+    }
+    
+    // Проверяем золото
+    if (game.gold < skin.price) {
+        showNotification(`Недостаточно золота! Нужно ${skin.price}🪙`, 1500);
+        return false;
+    }
+    
+    // Списываем золото
+    game.gold -= skin.price;
+    
+    // Добавляем скин в коллекцию
+    ownedSkins.push(skinId);
+    
+    // Автоматически надеваем новый скин
+    currentSkin = skinId;
+    
+    showNotification(`✅ Куплен скин "${skin.name}"!`, 2000);
+    
+    // Обновляем отображение
+    updateStatsDisplay();
+    saveSkinsToStorage();
+    draw();
+    
+    // Если селектор скинов открыт, обновляем его
+    if (notification.style.display === 'block' && notificationText.innerHTML.includes('ВЫБОР СКИНА')) {
+        showSkinSelector();
+    }
+    
+    return true;
+}
+	
+// Смена скина
+function changeSkin(skinId) {
+    if (!ownedSkins.includes(skinId)) {
+        showNotification('У вас нет этого скина!', 1500);
+        return false;
+    }
+    
+    currentSkin = skinId;
+    showNotification(`Скин изменен на "${heroSkins[skinId].name}"`, 1500);
+    
+    saveSkinsToStorage();
+    draw();
+    return true;
+}
+
+// Сохранение скинов в localStorage
+function saveSkinsToStorage() {
+    try {
+        const skinData = {
+            current: currentSkin,
+            owned: ownedSkins
+        };
+        localStorage.setItem('heroSkins', JSON.stringify(skinData));
+    } catch (e) {
+        console.log('Не удалось сохранить скины');
+    }
+}
+
+// Загрузка скинов из localStorage
+function loadSkinsFromStorage() {
+    try {
+        const saved = localStorage.getItem('heroSkins');
+        if (saved) {
+            const skinData = JSON.parse(saved);
+            
+            // Проверяем, что стандартный скин всегда есть
+            if (!skinData.owned.includes('default')) {
+                skinData.owned.unshift('default');
+            }
+            
+            currentSkin = skinData.current || 'default';
+            ownedSkins = skinData.owned;
+            
+            console.log('Скины загружены:', currentSkin, ownedSkins);
+        } else {
+            // Если нет сохранений, инициализируем с стандартным скином
+            ownedSkins = ['default'];
+            currentSkin = 'default';
+        }
+    } catch (e) {
+        console.log('Не удалось загрузить скины');
+        ownedSkins = ['default'];
+        currentSkin = 'default';
+    }
+}
+
+// Добавляем обработчики для сворачивания/разворачивания
+function setupCollapseHandlers() {
+    const compassHud = document.getElementById('compassHud');
+    const miniMap = document.getElementById('miniMap');
+    
+    // Удаляем старые обработчики, чтобы избежать дублирования
+    const oldCompassHandler = compassHud.onclick;
+    const oldMapHandler = miniMap.onclick;
+    
+    // Обработчик для компаса
+    compassHud.addEventListener('click', function(e) {
+        // Если кликнули на кнопку сворачивания - не обрабатываем
+        if (e.target.classList.contains('collapse-btn')) {
+            return;
+        }
+        
+        // Если есть компас и он свернут - разворачиваем
+        if (game.hasCompass && compassCollapsed) {
+            toggleCompassCollapse();
+        }
+        // Если есть компас и он развернут - сворачиваем (только если клик не по содержимому)
+        else if (game.hasCompass && !compassCollapsed && e.target === compassHud) {
+            toggleCompassCollapse();
+        }
+    });
+    
+    // Обработчик для карты
+    miniMap.addEventListener('click', function(e) {
+        if (e.target.classList.contains('collapse-btn')) {
+            return;
+        }
+        
+        const shouldShow = (game.hasMap && config.showMap) || (game.hasSchematic && config.showSchematic);
+        
+        if (shouldShow && mapCollapsed) {
+            toggleMapCollapse();
+        } else if (shouldShow && !mapCollapsed && e.target === miniMap) {
+            toggleMapCollapse();
+        }
+    });
+}
+
+function isSkinOwned(skinId) {
+    return ownedSkins.includes(skinId);
+}
+	
+function openShop() {
+    if (game.foundExit) {
+        showNotification('Игра завершена!', 1500);
+        return;
+    }
+	// Всегда обновляем ассортимент при открытии, если прошло много времени
+    const now = Date.now();
+    if (!game.lastShopUpdate || now - game.lastShopUpdate > 60000) { // 1 минута
+        generateShopInventory();
+        game.lastShopUpdate = now;
+    }
+	game.shopOpenCount = (game.shopOpenCount || 0) + 1;
+    
+    if (game.shopOpenCount % 5 === 0) {
+        generateShopInventory();
+        showNotification('🔄 Ассортимент магазина обновлен!', 1500);
+    }	
+    currentGoldElement.textContent = game.gold;
+    renderShopItems();
+    shopOverlay.style.display = 'flex';
+    menuOverlay.style.display = 'none';
+    notification.style.display = 'none';
+}
+
+function closeShop() {
+    shopOverlay.style.display = 'none';
+    draw();
+}
+
+function refreshShop() {
+    const refreshCost = 10;
+    
+    if (game.gold >= refreshCost) {
+        game.gold -= refreshCost;
+        generateShopInventory();
+        currentGoldElement.textContent = game.gold;
+        updateStatsDisplay();
+        
+        showNotification('Ассортимент обновлен! (-10 🪙)', 1500);
+        saveUISettings();
+    } else {
+        showNotification('Недостаточно золота для обновления!', 1500);
+    }
+}
+
 function generateShopInventory() {
     currentShopInventory = [];
     const itemKeys = Object.keys(shopItems);
-    const skinKeys = Object.keys(shopItems.skins);
+    const skinKeys = Object.keys(shopItems.skins || {});
     
     // Всегда добавляем базовые зелья
-    currentShopInventory.push(shopItems.healthPotionSmall);
+    if (shopItems.healthPotionSmall) {
+        currentShopInventory.push(shopItems.healthPotionSmall);
+    }
     
     // Добавляем 1-2 случайных скина (которых у игрока еще нет)
     const availableSkins = skinKeys.filter(skinKey => {
-        const skinId = shopItems.skins[skinKey].skinId;
-        return !ownedSkins.includes(skinId) && skinId !== 'default';
+        const skinId = shopItems.skins[skinKey]?.skinId;
+        return skinId && !ownedSkins.includes(skinId) && skinId !== 'default';
     });
     
     if (availableSkins.length > 0) {
         const skinCount = Math.min(2, availableSkins.length);
-        // Перемешиваем массив для случайности
         const shuffled = [...availableSkins].sort(() => Math.random() - 0.5);
         for (let i = 0; i < skinCount; i++) {
             currentShopInventory.push(shopItems.skins[shuffled[i]]);
@@ -6296,7 +6858,7 @@ function generateShopInventory() {
         const randomItemKey = random.choice(otherItems);
         const item = shopItems[randomItemKey];
         
-        if (!currentShopInventory.some(existing => existing.id === item.id)) {
+        if (item && !currentShopInventory.some(existing => existing.id === item.id)) {
             currentShopInventory.push(item);
         } else {
             i--;
@@ -6366,170 +6928,117 @@ function purchaseItem(item) {
 }
 
 // ===============================
-// ФУНКЦИИ ДЛЯ СКИНОВ
+// ФУНКЦИИ ЗАГРУЗКИ КОНФИГУРАЦИИ (СИНХРОННАЯ ВЕРСИЯ)
 // ===============================
 
-// Покупка скина
-function purchaseSkin(skinId) {
-    const skin = heroSkins[skinId];
+function loadGameConfiguration() {
+    console.log('Загрузка конфигурации из localStorage...');
     
-    if (!skin) {
-        showNotification('Скин не найден!', 1500);
-        return false;
-    }
-    
-    // Проверяем, есть ли уже скин
-    if (ownedSkins.includes(skinId)) {
-        showNotification('У вас уже есть этот скин!', 1500);
-        return false;
-    }
-    
-    // Проверяем золото
-    if (game.gold < skin.price) {
-        showNotification(`Недостаточно золота! Нужно ${skin.price}🪙`, 1500);
-        return false;
-    }
-    
-    // Списываем золото
-    game.gold -= skin.price;
-    
-    // Добавляем скин в коллекцию
-    ownedSkins.push(skinId);
-    
-    // Автоматически надеваем новый скин
-    currentSkin = skinId;
-    
-    showNotification(`✅ Куплен скин "${skin.name}"!`, 2000);
-    
-    // Обновляем отображение
-    updateStatsDisplay();
-    saveSkinsToStorage();
-    draw();
-    
-    // Обновляем магазин, чтобы убрать купленный скин из доступных
-    refreshShopAfterPurchase();
-    
-    // Если селектор скинов открыт, обновляем его
-    if (notification.style.display === 'block' && notificationText.innerHTML.includes('ВЫБОР СКИНА')) {
-        showSkinSelector();
-    }
-    
-    return true;
-}
-
-function refreshShopAfterPurchase() {
-    // Удаляем купленный скин из текущего ассортимента магазина
-    currentShopInventory = currentShopInventory.filter(item => {
-        // Если это скин, проверяем, не куплен ли он уже
-        if (item.type === 'skin') {
-            return !ownedSkins.includes(item.skinId);
-        }
-        return true;
-    });
-    
-    // Если магазин открыт, обновляем его отображение
-    if (shopOverlay.style.display === 'flex') {
-        renderShopItems();
-    }
-}
-	
-// Смена скина
-function changeSkin(skinId) {
-    if (!ownedSkins.includes(skinId)) {
-        showNotification('У вас нет этого скина!', 1500);
-        return false;
-    }
-    
-    currentSkin = skinId;
-    showNotification(`Скин изменен на "${heroSkins[skinId].name}"`, 1500);
-    
-    saveSkinsToStorage();
-    draw();
-    return true;
-}
-
-// Сохранение скинов в localStorage
-function saveSkinsToStorage() {
     try {
-        const skinData = {
-            current: currentSkin,
-            owned: ownedSkins
-        };
-        localStorage.setItem('heroSkins', JSON.stringify(skinData));
-    } catch (e) {
-        console.log('Не удалось сохранить скины');
-    }
-}
-
-// Загрузка скинов из localStorage
-function loadSkinsFromStorage() {
-    try {
-        const saved = localStorage.getItem('heroSkins');
-        if (saved) {
-            const skinData = JSON.parse(saved);
-            
-            // Проверяем, что стандартный скин всегда есть
-            if (!skinData.owned.includes('default')) {
-                skinData.owned.unshift('default');
-            }
-            
-            currentSkin = skinData.current || 'default';
-            ownedSkins = skinData.owned;
-            
-            console.log('Скины загружены:', currentSkin, ownedSkins);
+        // Пытаемся загрузить из localStorage
+        const savedConfig = localStorage.getItem('mazeCustomConfig');
+        if (savedConfig) {
+            const configData = JSON.parse(savedConfig);
+            console.log('✅ Конфигурация загружена из localStorage');
+            applyLoadedConfig(configData);
         } else {
-            // Если нет сохранений, инициализируем с стандартным скином
-            ownedSkins = ['default'];
-            currentSkin = 'default';
+            console.log('Используются стандартные настройки');
         }
     } catch (e) {
-        console.log('Не удалось загрузить скины');
-        ownedSkins = ['default'];
-        currentSkin = 'default';
+        console.log('Ошибка загрузки конфигурации:', e);
     }
 }
 
-function isSkinOwned(skinId) {
-    return ownedSkins.includes(skinId);
-}
-	
-function openShop() {
-    if (game.foundExit) {
-        showNotification('Игра завершена!', 1500);
-        return;
+// Функция применения конфигурации
+function applyLoadedConfig(configData) {
+    console.log('Применение конфигурации:', configData);
+    
+    // Применяем глобальные настройки
+    if (configData.global) {
+        if (configData.global.levels) config.levels = configData.global.levels;
+        if (configData.global.levelSize) config.levelSize = configData.global.levelSize;
+        if (configData.global.cellSize) config.cellSize = configData.global.cellSize;
+        if (configData.global.currentTheme) config.currentTheme = configData.global.currentTheme;
+        if (configData.global.fogDistance) config.fogDistance = configData.global.fogDistance;
     }
-	game.shopOpenCount = (game.shopOpenCount || 0) + 1;
     
-    if (game.shopOpenCount % 5 === 0) {
-        generateShopInventory();
-        showNotification('🔄 Ассортимент магазина обновлен!', 1500);
-    }	
-    currentGoldElement.textContent = game.gold;
-    renderShopItems();
-    shopOverlay.style.display = 'flex';
-    menuOverlay.style.display = 'none';
-    notification.style.display = 'none';
-}
-
-function closeShop() {
-    shopOverlay.style.display = 'none';
-    draw();
-}
-
-function refreshShop() {
-    const refreshCost = 10;
-    
-    if (game.gold >= refreshCost) {
-        game.gold -= refreshCost;
-        generateShopInventory();
-        currentGoldElement.textContent = game.gold;
-        updateStatsDisplay();
+    // Применяем настройки игрока
+    if (configData.player) {
+        if (configData.player.health !== undefined) config.playerHealth = configData.player.health;
+        if (configData.player.maxHealth !== undefined) config.playerMaxHealth = configData.player.maxHealth;
+        if (configData.player.damage !== undefined) config.playerDamage = configData.player.damage;
+        if (configData.player.defense !== undefined) config.playerDefense = configData.player.defense;
+        if (configData.player.level !== undefined) config.playerLevel = configData.player.level;
+        if (configData.player.gold !== undefined) game.gold = configData.player.gold;
+        if (configData.player.arrows !== undefined) playerArrows = configData.player.arrows;
         
-        showNotification('Ассортимент обновлен! (-10 🪙)', 1500);
-        saveUISettings();
-    } else {
-        showNotification('Недостаточно золота для обновления!', 1500);
+        // Загружаем инвентарь
+        if (configData.player.inventory && Array.isArray(configData.player.inventory)) {
+            configData.player.inventory.forEach((weaponId, index) => {
+                if (weaponId && weapons[weaponId]) {
+                    game.inventory[index] = weapons[weaponId];
+                } else if (index === 0 && !weaponId) {
+                    game.inventory[index] = weapons.fist;
+                }
+            });
+        }
     }
+    
+    // Заменяем врагов
+    if (configData.enemies) {
+        for (let key in enemies) delete enemies[key];
+        Object.assign(enemies, configData.enemies);
+    }
+    
+    // Заменяем оружие
+    if (configData.weapons) {
+        for (let key in weapons) delete weapons[key];
+        Object.assign(weapons, configData.weapons);
+    }
+    
+    // Заменяем предметы
+    if (configData.items) {
+        for (let key in items) delete items[key];
+        Object.assign(items, configData.items);
+    }
+    
+    // Загружаем скины
+    if (configData.skins) {
+        for (let key in heroSkins) delete heroSkins[key];
+        Object.assign(heroSkins, configData.skins);
+        
+        ownedSkins = ['default'];
+        Object.entries(configData.skins).forEach(([id, skin]) => {
+            if (skin.owned && !ownedSkins.includes(id)) {
+                ownedSkins.push(id);
+            }
+        });
+        
+        console.log('✅ Скины загружены:', Object.keys(heroSkins).length);
+    }
+    
+    // Применяем баланс
+    if (configData.balance) {
+        if (configData.balance.critChance !== undefined) config.critChance = configData.balance.critChance / 100;
+        if (configData.balance.critMultiplier !== undefined) config.critMultiplier = configData.balance.critMultiplier;
+        if (configData.balance.healthRegenPerKill !== undefined) config.healthRegenPerKill = configData.balance.healthRegenPerKill;
+        if (configData.balance.xpToNextLevel !== undefined) config.xpToNextLevel = configData.balance.xpToNextLevel;
+        if (configData.balance.damageBonusPerLevel !== undefined) config.damageBonusPerLevel = configData.balance.damageBonusPerLevel;
+        if (configData.balance.defenseBonusPerLevel !== undefined) config.defenseBonusPerLevel = configData.balance.defenseBonusPerLevel;
+        if (configData.balance.xpMultiplier !== undefined) config.xpMultiplier = configData.balance.xpMultiplier;
+        if (configData.balance.comboTimeout !== undefined) config.comboTimeout = configData.balance.comboTimeout;
+    }
+    
+    // Обновляем интерфейс
+    updateUI();
+    updateInventoryDisplay();
+    updateDamageInfo();
+    draw();
+    updateMiniMap();
+    updateCompass();
+    
+    showNotification('✅ Конфигурация загружена!', 2000);
+    console.log('✅ Конфигурация применена успешно');
 }
 
 // ===============================
@@ -6544,8 +7053,13 @@ function init() {
         setupCompassControls();
         setupRangedAttackControls();
         setupEscapeButton();
+        setupCollapseHandlers();
+
+        // ===== ЗАГРУЗКА КОНФИГУРАЦИИ (СИНХРОННО) =====
+        loadGameConfiguration(); // Теперь функция синхронная
+
         // Загружаем скины
-    	loadSkinsFromStorage();
+        loadSkinsFromStorage();
         loadUISettings();
         checkFirstTime();
         
@@ -6564,7 +7078,7 @@ function init() {
         setupTelegramIntegration();
         
         generateAllLevels();
-        
+                
         draw();
         updateInventoryDisplay();
         updateUI();
@@ -6576,11 +7090,11 @@ function init() {
         }, 500);
         
         setTimeout(() => {
-            loadGameFromCloud();
+            loadGameFromLocal();
         }, 1000);
         
         window.addEventListener('blur', () => {
-            saveGameToCloud();
+            saveGameToLocal();
         });
         
         window.addEventListener('focus', () => {
@@ -6604,7 +7118,6 @@ function init() {
         showNotification('Ошибка загрузки игры. Перезагрузите страницу.', 3000);
     }
 }
-
 // ===============================
 // ЗАПУСК ИГРЫ
 // ===============================
@@ -6613,43 +7126,4 @@ window.addEventListener('resize', resizeCanvas);
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
