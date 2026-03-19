@@ -1591,9 +1591,7 @@ try {
 }
 
 const user = tg.initDataUnsafe?.user;
-if (user) {
-    console.log('Игрок:', user.username || user.first_name);
-}
+const userId = user?.id || 'local_user';
 
 // ===============================
 // Получение элементов DOM
@@ -1674,9 +1672,9 @@ const themes = {
 };
 
 // ===============================
-// ОРУЖИЕ
+// ОРУЖИЕ (БУДЕТ ЗАМЕНЕНО ИЗ КОНФИГА)
 // ===============================
-const weapons = {
+let weapons = {
     fist: { name: "Кулаки", damage: 3, symbol: "👊", color: "#aaa", rarity: 1, melee: true },
     dagger: { name: "Кинжал", damage: 5, symbol: "🗡️", color: "#8a8aff", rarity: 2, melee: true },
     sword: { name: "Меч", damage: 8, symbol: "⚔️", color: "#ff8a00", rarity: 3, melee: true },
@@ -1687,9 +1685,9 @@ const weapons = {
 };
 
 // ===============================
-// ПРЕДМЕТЫ
+// ПРЕДМЕТЫ (БУДЕТ ЗАМЕНЕНО ИЗ КОНФИГА)
 // ===============================
-const items = {
+let items = {
     healthPotion: { 
         name: "Зелье здоровья", 
         type: "heal", 
@@ -1797,9 +1795,9 @@ const items = {
 };
 
 // ===============================
-// ВРАГИ
+// ВРАГИ (БУДЕТ ЗАМЕНЕНО ИЗ КОНФИГА)
 // ===============================
-const enemies = {
+let enemies = {
     rat: {
         name: "Крыса",
         health: 15,
@@ -1902,9 +1900,9 @@ const enemies = {
 };
 
 // ===============================
-// СКИНЫ ДЛЯ ГЕРОЯ
+// СКИНЫ ДЛЯ ГЕРОЯ (БУДЕТ ЗАМЕНЕНО ИЗ КОНФИГА)
 // ===============================
-const heroSkins = {
+let heroSkins = {
     default: {
         id: 'default',
         name: 'Стандартный',
@@ -2051,7 +2049,7 @@ let ownedSkins = ['default'];
 // ===============================
 // КОНФИГУРАЦИЯ
 // ===============================
-const config = {
+let config = {
     levels: 9,
     levelSize: 25,
     cellSize: 40,
@@ -2207,7 +2205,7 @@ function hapticFeedback(style = 'medium') {
     }
 }
 
-// Сохранение в localStorage вместо CloudStorage (так как CloudStorage не поддерживается)
+// Сохранение прогресса в localStorage (для локальной игры)
 function saveGameToLocal() {
     try {
         const gameState = {
@@ -2227,23 +2225,69 @@ function saveGameToLocal() {
             hasCompass: game.hasCompass,
             hasSchematic: game.hasSchematic,
             torchUses: torchUses || 0,
-            playerArrows: playerArrows || 0
+            playerArrows: playerArrows || 0,
+            ownedSkins: ownedSkins,
+            currentSkin: currentSkin
         };
         
-        localStorage.setItem('mazeSave', JSON.stringify(gameState));
+        localStorage.setItem(`maze_save_${userId}`, JSON.stringify(gameState));
         console.log('Игра сохранена в localStorage');
     } catch (e) {
         console.log('Error saving game:', e);
     }
 }
 
-// Загрузка из localStorage
-function loadGameFromLocal() {
+// Сохранение прогресса в Telegram Cloud (для Telegram)
+function saveGameToCloud() {
+    if (!tg || !tg.CloudStorage || userId === 'local_user') {
+        saveGameToLocal();
+        return;
+    }
+    
     try {
-        const saved = localStorage.getItem('mazeSave');
+        const gameState = {
+            player: game.player,
+            gold: game.gold,
+            health: config.playerHealth,
+            maxHealth: config.playerMaxHealth,
+            level: config.playerLevel,
+            xp: config.playerXP,
+            steps: game.steps,
+            inventory: game.inventory.map(w => w ? w.name : null),
+            activeWeapon: game.activeWeapon,
+            totalKills: game.totalKills,
+            achievements: game.achievements,
+            discoveredRooms: Array.from(game.discoveredRooms),
+            hasMap: game.hasMap,
+            hasCompass: game.hasCompass,
+            hasSchematic: game.hasSchematic,
+            torchUses: torchUses || 0,
+            playerArrows: playerArrows || 0,
+            ownedSkins: ownedSkins,
+            currentSkin: currentSkin
+        };
+        
+        tg.CloudStorage.setItem(`maze_save_${userId}`, JSON.stringify(gameState), (error) => {
+            if (error) {
+                console.log('Ошибка сохранения в Telegram Cloud:', error);
+                saveGameToLocal();
+            } else {
+                console.log('Игра сохранена в Telegram Cloud');
+            }
+        });
+    } catch (e) {
+        console.log('Error saving game:', e);
+        saveGameToLocal();
+    }
+}
+
+// Загрузка прогресса
+function loadGameProgress() {
+    try {
+        const saved = localStorage.getItem(`maze_save_${userId}`);
         if (!saved) {
             console.log('Нет сохранения');
-            return;
+            return false;
         }
         
         const gameState = JSON.parse(saved);
@@ -2259,6 +2303,8 @@ function loadGameFromLocal() {
         if (gameState.totalKills !== undefined) game.totalKills = gameState.totalKills;
         if (gameState.achievements) game.achievements = gameState.achievements;
         if (gameState.discoveredRooms) game.discoveredRooms = new Set(gameState.discoveredRooms);
+        if (gameState.ownedSkins) ownedSkins = gameState.ownedSkins;
+        if (gameState.currentSkin) currentSkin = gameState.currentSkin;
         
         game.hasMap = gameState.hasMap || false;
         game.hasCompass = gameState.hasCompass || false;
@@ -2276,141 +2322,114 @@ function loadGameFromLocal() {
             });
         }
         
-        showNotification('Игра загружена!', 2000);
-        updateUI();
-        updateInventoryDisplay();
-        draw();
-        updateMiniMap();
-        updateCompass();
-        
+        console.log('Прогресс загружен');
+        return true;
     } catch (e) {
         console.log('Ошибка загрузки:', e);
+        return false;
     }
 }
 
 // ===============================
-// ФУНКЦИИ ЗАГРУЗКИ КОНФИГУРАЦИИ
+// ЗАГРУЗКА КОНФИГУРАЦИИ ИЗ ФАЙЛА
 // ===============================
-
-// Функция загрузки конфигурации из JSON
-function loadGameConfig(jsonConfig) {
+async function loadGameConfig() {
+    console.log('Загрузка конфигурации игры...');
+    
+    // Сначала пробуем загрузить локальный файл
     try {
-        const loadedConfig = JSON.parse(jsonConfig);
-        
-        // Применяем глобальные настройки
-        if (loadedConfig.global) {
-            config.levels = loadedConfig.global.levels || config.levels;
-            config.levelSize = loadedConfig.global.levelSize || config.levelSize;
-            config.cellSize = loadedConfig.global.cellSize || config.cellSize;
-            config.currentTheme = loadedConfig.global.currentTheme || config.currentTheme;
-            config.fogDistance = loadedConfig.global.fogDistance || config.fogDistance;
+        const response = await fetch('game_config.json');
+        if (response.ok) {
+            const configData = await response.json();
+            console.log('✅ Конфигурация загружена из локального файла');
+            applyGameConfig(configData);
+            return true;
         }
-        
-        // Применяем настройки игрока
-        if (loadedConfig.player) {
-            config.playerHealth = loadedConfig.player.health || config.playerHealth;
-            config.playerMaxHealth = loadedConfig.player.maxHealth || config.playerMaxHealth;
-            config.playerDamage = loadedConfig.player.damage || config.playerDamage;
-            config.playerDefense = loadedConfig.player.defense || config.playerDefense;
-            config.playerLevel = loadedConfig.player.level || config.playerLevel;
-            game.gold = loadedConfig.player.gold || game.gold;
-            playerArrows = loadedConfig.player.arrows || playerArrows;
-            
-            // Загружаем инвентарь, если есть
-            if (loadedConfig.player.inventory) {
-                loadedConfig.player.inventory.forEach((weaponId, index) => {
-                    if (weaponId && weapons[weaponId]) {
-                        game.inventory[index] = weapons[weaponId];
-                    }
-                });
-            }
-        }
-        
-        // Заменяем врагов
-        if (loadedConfig.enemies) {
-            for (let key in enemies) delete enemies[key];
-            Object.assign(enemies, loadedConfig.enemies);
-        }
-        
-        // Заменяем оружие
-        if (loadedConfig.weapons) {
-            for (let key in weapons) delete weapons[key];
-            Object.assign(weapons, loadedConfig.weapons);
-        }
-        
-        // Заменяем предметы
-        if (loadedConfig.items) {
-            for (let key in items) delete items[key];
-            Object.assign(items, loadedConfig.items);
-        }
-        
-        // Загружаем скины
-        if (loadedConfig.skins) {
-            for (let key in heroSkins) delete heroSkins[key];
-            Object.assign(heroSkins, loadedConfig.skins);
-            
-            ownedSkins = ['default'];
-            Object.entries(loadedConfig.skins).forEach(([id, skin]) => {
-                if (skin.owned && !ownedSkins.includes(id)) {
-                    ownedSkins.push(id);
-                }
-            });
-        }
-        
-        // Загружаем товары магазина
-        if (loadedConfig.shop) {
-            for (let key in shopItems) delete shopItems[key];
-            Object.assign(shopItems, loadedConfig.shop);
-            
-            // Перегенерируем ассортимент
-            if (typeof generateShopInventory === 'function') {
-                generateShopInventory();
-            }
-        }
-        
-        // Применяем настройки баланса
-        if (loadedConfig.balance) {
-            config.critChance = (loadedConfig.balance.critChance || 10) / 100;
-            config.critMultiplier = loadedConfig.balance.critMultiplier || 1.5;
-            config.healthRegenPerKill = loadedConfig.balance.healthRegenPerKill || 5;
-            config.xpToNextLevel = loadedConfig.balance.xpToNextLevel || 100;
-            config.damageBonusPerLevel = loadedConfig.balance.damageBonusPerLevel || 0.5;
-            config.defenseBonusPerLevel = loadedConfig.balance.defenseBonusPerLevel || 0.3;
-            config.xpMultiplier = loadedConfig.balance.xpMultiplier || 1.0;
-            config.comboTimeout = loadedConfig.balance.comboTimeout || 3000;
-        }
-		
-        // Обновляем интерфейс
-        updateUI();
-        updateInventoryDisplay();
-        updateDamageInfo();
-        draw();
-        
-        showNotification('✅ Конфигурация загружена!', 2000);
-        console.log('Конфигурация успешно загружена');
-        
-        // Сохраняем в localStorage для будущих игр
-        saveGameToLocal();
-        saveUISettings();
-	saveConfigToStorage(jsonConfig);
-        
     } catch (e) {
-        console.error('Ошибка загрузки конфигурации:', e);
-        showNotification('❌ Ошибка загрузки конфигурации', 3000);
+        console.log('Локальный файл не найден');
     }
+    
+    // Пробуем загрузить с GitHub (для Telegram)
+    try {
+        const githubConfigUrl = 'https://raw.githubusercontent.com/ваш-username/ваш-репозиторий/main/game_config.json';
+        const response = await fetch(githubConfigUrl);
+        if (response.ok) {
+            const configData = await response.json();
+            console.log('✅ Конфигурация загружена из GitHub');
+            applyGameConfig(configData);
+            return true;
+        }
+    } catch (e) {
+        console.log('GitHub недоступен');
+    }
+    
+    // Пробуем загрузить из localStorage (сохраненная пользователем)
+    try {
+        const savedConfig = localStorage.getItem('maze_custom_config');
+        if (savedConfig) {
+            const configData = JSON.parse(savedConfig);
+            console.log('✅ Конфигурация загружена из localStorage');
+            applyGameConfig(configData);
+            return true;
+        }
+    } catch (e) {
+        console.log('Ошибка загрузки из localStorage');
+    }
+    
+    console.log('⚠️ Используется стандартная конфигурация');
+    return false;
 }
 
-// Сохранение конфигурации в localStorage
-function saveConfigToStorage(configJson) {
-    try {
-        localStorage.setItem('mazeCustomConfig', configJson);
-        console.log('Конфигурация сохранена в localStorage');
-    } catch (e) {
-        console.log('Ошибка сохранения конфигурации:', e);
+// Применение загруженной конфигурации
+function applyGameConfig(configData) {
+    // Применяем глобальные настройки
+    if (configData.global) {
+        config.levels = configData.global.levels || config.levels;
+        config.levelSize = configData.global.levelSize || config.levelSize;
+        config.cellSize = configData.global.cellSize || config.cellSize;
+        config.fogDistance = configData.global.fogDistance || config.fogDistance;
     }
+    
+    // Применяем баланс
+    if (configData.balance) {
+        config.critChance = (configData.balance.critChance || 10) / 100;
+        config.critMultiplier = configData.balance.critMultiplier || 1.5;
+        config.healthRegenPerKill = configData.balance.healthRegenPerKill || 5;
+        config.xpToNextLevel = configData.balance.xpToNextLevel || 100;
+        config.damageBonusPerLevel = configData.balance.damageBonusPerLevel || 0.5;
+        config.defenseBonusPerLevel = configData.balance.defenseBonusPerLevel || 0.3;
+        config.xpMultiplier = configData.balance.xpMultiplier || 1.0;
+        config.comboTimeout = configData.balance.comboTimeout || 3000;
+    }
+    
+    // Заменяем врагов
+    if (configData.enemies) {
+        for (let key in enemies) delete enemies[key];
+        Object.assign(enemies, configData.enemies);
+    }
+    
+    // Заменяем оружие
+    if (configData.weapons) {
+        for (let key in weapons) delete weapons[key];
+        Object.assign(weapons, configData.weapons);
+    }
+    
+    // Заменяем предметы
+    if (configData.items) {
+        for (let key in items) delete items[key];
+        Object.assign(items, configData.items);
+    }
+    
+    // Заменяем скины
+    if (configData.skins) {
+        for (let key in heroSkins) delete heroSkins[key];
+        Object.assign(heroSkins, configData.skins);
+    }
+    
+    console.log('✅ Конфигурация применена');
 }
 
-// Загрузка из файла
+// Загрузка конфигурации из файла (по кнопке)
 function loadConfigFromFile() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -2421,7 +2440,19 @@ function loadConfigFromFile() {
         const reader = new FileReader();
         
         reader.onload = function(e) {
-            loadGameConfig(e.target.result);
+            try {
+                const configData = JSON.parse(e.target.result);
+                applyGameConfig(configData);
+                localStorage.setItem('maze_custom_config', e.target.result);
+                
+                // Перезапускаем игру с новой конфигурацией
+                newGame();
+                
+                showNotification('✅ Конфигурация загружена!', 2000);
+            } catch (err) {
+                console.error('Ошибка загрузки конфигурации:', err);
+                showNotification('❌ Ошибка загрузки конфигурации', 3000);
+            }
         };
         
         reader.readAsText(file);
@@ -3183,7 +3214,12 @@ function movePlayer(dx, dy) {
             checkEnemyAttacks();
         }
         
-        saveGameToLocal();
+        // Сохраняем прогресс
+        if (userId === 'local_user') {
+            saveGameToLocal();
+        } else {
+            saveGameToCloud();
+        }
         
         return true;
     }
@@ -3581,7 +3617,12 @@ function processEnemyKill(enemy) {
     
     checkLevelUp();
     updateStatsDisplay();
-    saveGameToLocal();
+    
+    if (userId === 'local_user') {
+        saveGameToLocal();
+    } else {
+        saveGameToCloud();
+    }
     saveUISettings();
 }
 
@@ -3890,6 +3931,7 @@ function newGame() {
     
     hideCombatIndicator();
     hideEscapeButton();
+    generateShopInventory();
     
     game.achievements = {
         firstBlood: false,
@@ -4119,6 +4161,7 @@ function draw() {
     if (isCombatLocked && currentCombatEnemy) {
         showEnemyHealthBar(currentCombatEnemy);
     }
+    //drawEnemyHealthBars();
     updateUI();
 }
 
@@ -4428,6 +4471,65 @@ function showSkinSelector() {
 function closeSkinSelector() {
     notification.style.display = 'none';
 }
+
+/*function drawEnemyHealthBars() {
+    if (!isCombatLocked || !currentCombatEnemy) return;
+    
+    const enemy = currentCombatEnemy;
+    const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+    
+    const healthBar = document.querySelector('.health-bar');
+    if (!healthBar) return;
+    
+    const rect = healthBar.getBoundingClientRect();
+    const canvasRect = canvas.getBoundingClientRect();
+    const barX = rect.left - canvasRect.left;
+    const barY = rect.top - canvasRect.top - 50;
+    
+    const barWidth = rect.width;
+    const barHeight = 20;
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(barX - 5, barY - 5, barWidth + 10, barHeight + 25);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`⚔️ ${enemy.type.name}:`, barX, barY);
+    
+    ctx.fillStyle = 'rgba(255, 50, 50, 0.3)';
+    ctx.fillRect(barX, barY + 20, barWidth, barHeight);
+    
+    if (healthPercent > 70) {
+        ctx.fillStyle = '#44ff44';
+    } else if (healthPercent > 30) {
+        ctx.fillStyle = '#ffaa44';
+    } else {
+        ctx.fillStyle = '#ff4444';
+    }
+    
+    ctx.fillRect(barX, barY + 20, barWidth * healthPercent / 100, barHeight);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(
+        `${Math.floor(enemy.health)}/${enemy.maxHealth}`,
+        barX + barWidth/2,
+        barY + 20 + barHeight/2
+    );
+    
+    if (isCombatLocked) {
+        const pulse = Math.sin(Date.now() * 0.005) * 0.2 + 0.8;
+        ctx.globalAlpha = pulse * 0.3;
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barX - 3, barY - 3, barWidth + 6, barHeight + 28);
+        ctx.globalAlpha = 1;
+    }
+}*/
 
 function drawDamageNumbers() {
     for (let i = game.damageNumbers.length - 1; i >= 0; i--) {
@@ -5227,7 +5329,12 @@ function activateTorch() {
     
     updateInventoryDisplay();
     saveUISettings();
-    saveGameToLocal();
+    
+    if (userId === 'local_user') {
+        saveGameToLocal();
+    } else {
+        saveGameToCloud();
+    }
     
     updateMiniMap();
     draw();
@@ -5948,7 +6055,7 @@ function checkFirstTime() {
 // МАГАЗИН ПРЕДМЕТОВ
 // ===============================
 
-const shopItems = {
+let shopItems = {
     healthPotionSmall: {
         id: 'healthPotionSmall',
         name: 'Малое зелье здоровья',
@@ -5962,7 +6069,11 @@ const shopItems = {
             showNotification('+20 HP!', 1500);
             updateUI();
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     healthPotionLarge: {
@@ -5978,7 +6089,11 @@ const shopItems = {
             showNotification('+50 HP!', 1500);
             updateUI();
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     strengthPotion: {
@@ -5994,7 +6109,11 @@ const shopItems = {
             config.buffs.strength.duration = 10;
             showNotification('+5 к урону на 10 шагов!', 1500);
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     shield: {
@@ -6010,7 +6129,11 @@ const shopItems = {
             config.buffs.defense.duration = 10;
             showNotification('+3 к защите на 10 шагов!', 1500);
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     speedBoots: {
@@ -6028,7 +6151,11 @@ const shopItems = {
             updateDiscoveredRooms();
             draw();
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     mapReveal: {
@@ -6064,7 +6191,11 @@ const shopItems = {
             updateMiniMap();
             draw();
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     compassReveal: {
@@ -6083,7 +6214,11 @@ const shopItems = {
                 updateCompass();
                 showNotification('Компас куплен! Включен автоматически.', 2000);
                 hapticFeedback('success');
-                saveGameToLocal();
+                if (userId === 'local_user') {
+                    saveGameToLocal();
+                } else {
+                    saveGameToCloud();
+                }
             } else {
                 showNotification('У вас уже есть компас!', 1500);
             }
@@ -6130,7 +6265,11 @@ const shopItems = {
                 
                 showNotification(`🌀 Телепорт! Этаж ${targetFloor + 1}`, 2500);
                 hapticFeedback('success');
-                saveGameToLocal();
+                if (userId === 'local_user') {
+                    saveGameToLocal();
+                } else {
+                    saveGameToCloud();
+                }
             } else {
                 showNotification('Свиток не сработал!', 1500);
             }
@@ -6151,7 +6290,11 @@ const shopItems = {
                 updateInventoryDisplay();
                 showNotification(`${weapon.name} усилен! Урон: ${weapon.damage}`, 2000);
                 hapticFeedback('success');
-                saveGameToLocal();
+                if (userId === 'local_user') {
+                    saveGameToLocal();
+                } else {
+                    saveGameToCloud();
+                }
             } else {
                 showNotification('Сначала выберите оружие!', 1500);
             }
@@ -6171,7 +6314,11 @@ const shopItems = {
             updateUI();
             showNotification('Максимальное здоровье увеличено на 25!', 2000);
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     torch: {
@@ -6186,7 +6333,11 @@ const shopItems = {
             addToInventory(items.torch);
             showNotification('Получен магический факел! Используйте его для освещения пути.', 2000);
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     dagger: {
@@ -6224,7 +6375,11 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Кинжал!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     sword: {
@@ -6262,7 +6417,11 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Меч!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     axe: {
@@ -6300,7 +6459,11 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Топор!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     magicStaff: {
@@ -6338,7 +6501,11 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Посох!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     legendary: {
@@ -6376,7 +6543,11 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на Легендарный!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     bow: {
@@ -6414,7 +6585,11 @@ const shopItems = {
                 showNotification(`Заменил ${oldWeapon.name} на лук!`, 2000);
             }
             hapticFeedback('success');
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     },
     arrows: {
@@ -6429,193 +6604,13 @@ const shopItems = {
             addToInventory(items.arrows);
             showNotification('Получено 5 стрел для лука!', 2000);
             hapticFeedback('success');
-            saveGameToLocal();
-        }
-    },
-skins: {
-    warrior: {
-        id: 'skin_warrior',
-        name: 'Скин "Воин"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.warrior.price,
-        icon: heroSkins.warrior.symbol,
-        color: heroSkins.warrior.color,
-        type: 'skin',
-        skinId: 'warrior',
-        use: function() {
-            purchaseSkin('warrior');
-        }
-    },
-    mage: {
-        id: 'skin_mage',
-        name: 'Скин "Маг"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.mage.price,
-        icon: heroSkins.mage.symbol,
-        color: heroSkins.mage.color,
-        type: 'skin',
-        skinId: 'mage',
-        use: function() {
-            purchaseSkin('mage');
-        }
-    },
-    assassin: {
-        id: 'skin_assassin',
-        name: 'Скин "Убийца"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.assassin.price,
-        icon: heroSkins.assassin.symbol,
-        color: heroSkins.assassin.color,
-        type: 'skin',
-        skinId: 'assassin',
-        use: function() {
-            purchaseSkin('assassin');
-        }
-    },
-    astroman: {
-        id: 'skin_astroman',
-        name: 'Скин "Космонавт"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.astroman.price,
-        icon: heroSkins.astroman.symbol,
-        color: heroSkins.astroman.color,
-        type: 'skin',
-        skinId: 'astroman',
-        use: function() {
-            purchaseSkin('astroman');
-        }
-    },
-    ufo: {
-        id: 'skin_ufo',
-        name: 'Скин "Инопланетянин"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.ufo.price,
-        icon: heroSkins.ufo.symbol,
-        color: heroSkins.ufo.color,
-        type: 'skin',
-        skinId: 'ufo',
-        use: function() {
-            purchaseSkin('ufo');
-        }
-    },
-    policeman: {
-        id: 'skin_policeman',
-        name: 'Скин "Полицейский"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.policeman.price,
-        icon: heroSkins.policeman.symbol,
-        color: heroSkins.policeman.color,
-        type: 'skin',
-        skinId: 'policeman',
-        use: function() {
-            purchaseSkin('policeman');
-        }
-    },
-    detectiv: {
-        id: 'skin_detectiv',
-        name: 'Скин "Детектив"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.detectiv.price,
-        icon: heroSkins.detectiv.symbol,
-        color: heroSkins.detectiv.color,
-        type: 'skin',
-        skinId: 'detectiv',
-        use: function() {
-            purchaseSkin('detectiv');
-        }
-    },
-    angel: {
-        id: 'skin_angel',
-        name: 'Скин "Ангел"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.angel.price,
-        icon: heroSkins.angel.symbol,
-        color: heroSkins.angel.color,
-        type: 'skin',
-        skinId: 'angel',
-        use: function() {
-            purchaseSkin('angel');
-        }
-    },
-    ghost: {
-        id: 'skin_ghost',
-        name: 'Скин "Призрак"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.ghost.price,
-        icon: heroSkins.ghost.symbol,
-        color: heroSkins.ghost.color,
-        type: 'skin',
-        skinId: 'ghost',
-        use: function() {
-            purchaseSkin('ghost');
-        }
-    },
-	fireman: {
-        id: 'skin_fireman',
-        name: 'Скин "Пожарный"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.fireman.price,
-        icon: heroSkins.fireman.symbol,
-        color: heroSkins.fireman.color,
-        type: 'skin',
-        skinId: 'fireman',
-        use: function() {
-            purchaseSkin('fireman');
-        }
-    },
-	farmman: {
-        id: 'skin_farmman',
-        name: 'Скин "Фермер"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.farmman.price,
-        icon: heroSkins.farmman.symbol,
-        color: heroSkins.farmman.color,
-        type: 'skin',
-        skinId: 'farmman',
-        use: function() {
-            purchaseSkin('farmman');
-        }
-    },
-	engineer: {
-        id: 'skin_engineer',
-        name: 'Скин "Инженер"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.engineer.price,
-        icon: heroSkins.engineer.symbol,
-        color: heroSkins.engineer.color,
-        type: 'skin',
-        skinId: 'engineer',
-        use: function() {
-            purchaseSkin('engineer');
-        }
-    },
-	robot: {
-        id: 'skin_robot',
-        name: 'Скин "Робот"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.robot.price,
-        icon: heroSkins.robot.symbol,
-        color: heroSkins.robot.color,
-        type: 'skin',
-        skinId: 'robot',
-        use: function() {
-            purchaseSkin('robot');
-        }
-    },
-	pilot: {
-        id: 'skin_pilot',
-        name: 'Скин "Пилот"',
-        effect: 'Новый облик для героя',
-        price: heroSkins.pilot.price,
-        icon: heroSkins.pilot.symbol,
-        color: heroSkins.pilot.color,
-        type: 'skin',
-        skinId: 'pilot',
-        use: function() {
-            purchaseSkin('pilot');
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         }
     }
-}
 };
 
 let currentShopInventory = [];
@@ -6672,6 +6667,12 @@ function purchaseSkin(skinId) {
     saveSkinsToStorage();
     draw();
     
+    if (userId === 'local_user') {
+        saveGameToLocal();
+    } else {
+        saveGameToCloud();
+    }
+    
     // Если селектор скинов открыт, обновляем его
     if (notification.style.display === 'block' && notificationText.innerHTML.includes('ВЫБОР СКИНА')) {
         showSkinSelector();
@@ -6692,6 +6693,11 @@ function changeSkin(skinId) {
     
     saveSkinsToStorage();
     draw();
+    if (userId === 'local_user') {
+        saveGameToLocal();
+    } else {
+        saveGameToCloud();
+    }
     return true;
 }
 
@@ -6822,6 +6828,11 @@ function refreshShop() {
         
         showNotification('Ассортимент обновлен! (-10 🪙)', 1500);
         saveUISettings();
+        if (userId === 'local_user') {
+            saveGameToLocal();
+        } else {
+            saveGameToCloud();
+        }
     } else {
         showNotification('Недостаточно золота для обновления!', 1500);
     }
@@ -6830,29 +6841,14 @@ function refreshShop() {
 function generateShopInventory() {
     currentShopInventory = [];
     const itemKeys = Object.keys(shopItems);
-    const skinKeys = Object.keys(shopItems.skins || {});
     
     // Всегда добавляем базовые зелья
     if (shopItems.healthPotionSmall) {
         currentShopInventory.push(shopItems.healthPotionSmall);
     }
     
-    // Добавляем 1-2 случайных скина (которых у игрока еще нет)
-    const availableSkins = skinKeys.filter(skinKey => {
-        const skinId = shopItems.skins[skinKey]?.skinId;
-        return skinId && !ownedSkins.includes(skinId) && skinId !== 'default';
-    });
-    
-    if (availableSkins.length > 0) {
-        const skinCount = Math.min(2, availableSkins.length);
-        const shuffled = [...availableSkins].sort(() => Math.random() - 0.5);
-        for (let i = 0; i < skinCount; i++) {
-            currentShopInventory.push(shopItems.skins[shuffled[i]]);
-        }
-    }
-    
-    // Добавляем остальные товары (кроме скинов)
-    const otherItems = itemKeys.filter(key => key !== 'skins');
+    // Добавляем остальные товары
+    const otherItems = itemKeys.filter(key => key !== 'skins' && key !== 'healthPotionSmall');
     const itemCount = random.int(3, 5);
     for (let i = 0; i < itemCount; i++) {
         const randomItemKey = random.choice(otherItems);
@@ -6928,137 +6924,28 @@ function purchaseItem(item) {
 }
 
 // ===============================
-// ФУНКЦИИ ЗАГРУЗКИ КОНФИГУРАЦИИ (СИНХРОННАЯ ВЕРСИЯ)
-// ===============================
-
-function loadGameConfiguration() {
-    console.log('Загрузка конфигурации из localStorage...');
-    
-    try {
-        // Пытаемся загрузить из localStorage
-        const savedConfig = localStorage.getItem('mazeCustomConfig');
-        if (savedConfig) {
-            const configData = JSON.parse(savedConfig);
-            console.log('✅ Конфигурация загружена из localStorage');
-            applyLoadedConfig(configData);
-        } else {
-            console.log('Используются стандартные настройки');
-        }
-    } catch (e) {
-        console.log('Ошибка загрузки конфигурации:', e);
-    }
-}
-
-// Функция применения конфигурации
-function applyLoadedConfig(configData) {
-    console.log('Применение конфигурации:', configData);
-    
-    // Применяем глобальные настройки
-    if (configData.global) {
-        if (configData.global.levels) config.levels = configData.global.levels;
-        if (configData.global.levelSize) config.levelSize = configData.global.levelSize;
-        if (configData.global.cellSize) config.cellSize = configData.global.cellSize;
-        if (configData.global.currentTheme) config.currentTheme = configData.global.currentTheme;
-        if (configData.global.fogDistance) config.fogDistance = configData.global.fogDistance;
-    }
-    
-    // Применяем настройки игрока
-    if (configData.player) {
-        if (configData.player.health !== undefined) config.playerHealth = configData.player.health;
-        if (configData.player.maxHealth !== undefined) config.playerMaxHealth = configData.player.maxHealth;
-        if (configData.player.damage !== undefined) config.playerDamage = configData.player.damage;
-        if (configData.player.defense !== undefined) config.playerDefense = configData.player.defense;
-        if (configData.player.level !== undefined) config.playerLevel = configData.player.level;
-        if (configData.player.gold !== undefined) game.gold = configData.player.gold;
-        if (configData.player.arrows !== undefined) playerArrows = configData.player.arrows;
-        
-        // Загружаем инвентарь
-        if (configData.player.inventory && Array.isArray(configData.player.inventory)) {
-            configData.player.inventory.forEach((weaponId, index) => {
-                if (weaponId && weapons[weaponId]) {
-                    game.inventory[index] = weapons[weaponId];
-                } else if (index === 0 && !weaponId) {
-                    game.inventory[index] = weapons.fist;
-                }
-            });
-        }
-    }
-    
-    // Заменяем врагов
-    if (configData.enemies) {
-        for (let key in enemies) delete enemies[key];
-        Object.assign(enemies, configData.enemies);
-    }
-    
-    // Заменяем оружие
-    if (configData.weapons) {
-        for (let key in weapons) delete weapons[key];
-        Object.assign(weapons, configData.weapons);
-    }
-    
-    // Заменяем предметы
-    if (configData.items) {
-        for (let key in items) delete items[key];
-        Object.assign(items, configData.items);
-    }
-    
-    // Загружаем скины
-    if (configData.skins) {
-        for (let key in heroSkins) delete heroSkins[key];
-        Object.assign(heroSkins, configData.skins);
-        
-        ownedSkins = ['default'];
-        Object.entries(configData.skins).forEach(([id, skin]) => {
-            if (skin.owned && !ownedSkins.includes(id)) {
-                ownedSkins.push(id);
-            }
-        });
-        
-        console.log('✅ Скины загружены:', Object.keys(heroSkins).length);
-    }
-    
-    // Применяем баланс
-    if (configData.balance) {
-        if (configData.balance.critChance !== undefined) config.critChance = configData.balance.critChance / 100;
-        if (configData.balance.critMultiplier !== undefined) config.critMultiplier = configData.balance.critMultiplier;
-        if (configData.balance.healthRegenPerKill !== undefined) config.healthRegenPerKill = configData.balance.healthRegenPerKill;
-        if (configData.balance.xpToNextLevel !== undefined) config.xpToNextLevel = configData.balance.xpToNextLevel;
-        if (configData.balance.damageBonusPerLevel !== undefined) config.damageBonusPerLevel = configData.balance.damageBonusPerLevel;
-        if (configData.balance.defenseBonusPerLevel !== undefined) config.defenseBonusPerLevel = configData.balance.defenseBonusPerLevel;
-        if (configData.balance.xpMultiplier !== undefined) config.xpMultiplier = configData.balance.xpMultiplier;
-        if (configData.balance.comboTimeout !== undefined) config.comboTimeout = configData.balance.comboTimeout;
-    }
-    
-    // Обновляем интерфейс
-    updateUI();
-    updateInventoryDisplay();
-    updateDamageInfo();
-    draw();
-    updateMiniMap();
-    updateCompass();
-    
-    showNotification('✅ Конфигурация загружена!', 2000);
-    console.log('✅ Конфигурация применена успешно');
-}
-
-// ===============================
 // ИНИЦИАЛИЗАЦИЯ
 // ===============================
 
-function init() {
+async function init() {
     try {		
         setupTelegramApp();
         resizeCanvas();
+        
+        // ШАГ 1: Загружаем конфигурацию
+        await loadGameConfig();
+        
+        // ШАГ 2: Загружаем прогресс игрока
+        loadGameProgress();
+        
+        // ШАГ 3: Настраиваем обработчики
         setupSwipeControls();
         setupCompassControls();
         setupRangedAttackControls();
         setupEscapeButton();
         setupCollapseHandlers();
 
-        // ===== ЗАГРУЗКА КОНФИГУРАЦИИ (СИНХРОННО) =====
-        loadGameConfiguration(); // Теперь функция синхронная
-
-        // Загружаем скины
+        // ШАГ 4: Загружаем скины и настройки UI
         loadSkinsFromStorage();
         loadUISettings();
         checkFirstTime();
@@ -7077,6 +6964,7 @@ function init() {
         initShop();
         setupTelegramIntegration();
         
+        // ШАГ 5: Генерируем уровни и запускаем игру
         generateAllLevels();
                 
         draw();
@@ -7089,12 +6977,12 @@ function init() {
             showInstructions();
         }, 500);
         
-        setTimeout(() => {
-            loadGameFromLocal();
-        }, 1000);
-        
         window.addEventListener('blur', () => {
-            saveGameToLocal();
+            if (userId === 'local_user') {
+                saveGameToLocal();
+            } else {
+                saveGameToCloud();
+            }
         });
         
         window.addEventListener('focus', () => {
@@ -7118,6 +7006,7 @@ function init() {
         showNotification('Ошибка загрузки игры. Перезагрузите страницу.', 3000);
     }
 }
+
 // ===============================
 // ЗАПУСК ИГРЫ
 // ===============================
