@@ -1,0 +1,588 @@
+{
+  "global": {
+    "levels": 9,
+    "levelSize": 25,
+    "cellSize": 40,
+    "seed": "Date.now()",
+    "currentTheme": "dungeon",
+    "fogDistance": 2
+  },
+  "player": {
+    "health": 250,
+    "maxHealth": 100,
+    "damage": 3,
+    "defense": 0,
+    "level": 1,
+    "gold": 1500,
+    "arrows": 0,
+    "inventory": [
+      "axe",
+      "legendary",
+      "sword",
+      "magicStaff"
+    ]
+  },
+  "enemies": {
+    "rat": {
+      "name": "Крыса",
+      "health": 15,
+      "damage": 3,
+      "symbol": "🐀",
+      "color": "#8a6642",
+      "xp": 10,
+      "rarity": 1
+    },
+    "goblin": {
+      "name": "Гоблин",
+      "health": 25,
+      "damage": 5,
+      "symbol": "👺",
+      "color": "#44aa44",
+      "xp": 20,
+      "rarity": 2
+    },
+    "gorilla": {
+      "name": "Горилла",
+      "health": 30,
+      "damage": 6,
+      "symbol": "🦍",
+      "color": "#cccccc",
+      "xp": 25,
+      "rarity": 2
+    },
+    "zombie": {
+      "name": "Зомби",
+      "health": 35,
+      "damage": 6,
+      "symbol": "🧟‍♂️",
+      "color": "#cccccc",
+      "xp": 30,
+      "rarity": 2
+    },
+    "skeleton": {
+      "name": "Скелет",
+      "health": 40,
+      "damage": 7,
+      "symbol": "💀",
+      "color": "#cccccc",
+      "xp": 35,
+      "rarity": 3
+    },
+    "bison": {
+      "name": "Бизон",
+      "health": 45,
+      "damage": 9,
+      "symbol": "🦬",
+      "color": "#cccccc",
+      "xp": 40,
+      "rarity": 3
+    },
+    "orc": {
+      "name": "Орк",
+      "health": 60,
+      "damage": 10,
+      "symbol": "🧌",
+      "color": "#664444",
+      "xp": 50,
+      "rarity": 4
+    },
+    "crocodile": {
+      "name": "Крокодил",
+      "health": 70,
+      "damage": 12,
+      "symbol": "🐊",
+      "color": "#664444",
+      "xp": 70,
+      "rarity": 4
+    },
+    "snake": {
+      "name": "Змея",
+      "health": 85,
+      "damage": 14,
+      "symbol": "🐍",
+      "color": "#ff4444",
+      "xp": 85,
+      "rarity": 4
+    },
+    "dragon": {
+      "name": "Дракон",
+      "health": 100,
+      "damage": 15,
+      "symbol": "🐉",
+      "color": "#ff4444",
+      "xp": 100,
+      "rarity": 5
+    },
+    "trex": {
+      "name": "Тиранозавр",
+      "health": 150,
+      "damage": 20,
+      "symbol": "🦖",
+      "color": "#ff4444",
+      "xp": 130,
+      "rarity": 5
+    },
+    "enemy_1773757569546": {
+      "name": "Демон",
+      "health": 50,
+      "damage": 8,
+      "symbol": "👾",
+      "color": "#ad46af",
+      "xp": 50,
+      "rarity": 2
+    }
+  },
+  "weapons": {
+    "fist": {
+      "name": "Кулаки",
+      "damage": 3,
+      "symbol": "👊",
+      "color": "#aaa",
+      "rarity": 1,
+      "melee": true
+    },
+    "dagger": {
+      "name": "Кинжал",
+      "damage": 5,
+      "symbol": "🗡️",
+      "color": "#8a8aff",
+      "rarity": 2,
+      "melee": true
+    },
+    "sword": {
+      "name": "Меч",
+      "damage": 8,
+      "symbol": "⚔️",
+      "color": "#ff8a00",
+      "rarity": 3,
+      "melee": true
+    },
+    "axe": {
+      "name": "Топор",
+      "damage": 12,
+      "symbol": "🪓",
+      "color": "#ff4444",
+      "rarity": 4,
+      "melee": true
+    },
+    "bow": {
+      "name": "Лук",
+      "damage": 7,
+      "symbol": "🏹",
+      "color": "#8a6642",
+      "rarity": 3,
+      "melee": false,
+      "range": 5,
+      "ammo": 10
+    },
+    "magicStaff": {
+      "name": "Посох",
+      "damage": 15,
+      "symbol": "🦯",
+      "color": "#aa44ff",
+      "rarity": 5,
+      "melee": true
+    },
+    "legendary": {
+      "name": "Легендарный",
+      "damage": 20,
+      "symbol": "🔫",
+      "color": "#ffdd00",
+      "rarity": 6,
+      "melee": true
+    }
+  },
+  "items": {
+    "healthPotion": {
+      "name": "Зелье здоровья",
+      "type": "heal",
+      "value": 30,
+      "symbol": "🧪",
+      "color": "#ff4444",
+      "effect": "Восстанавливает здоровье"
+    },
+    "strengthPotion": {
+      "name": "Зелье силы",
+      "type": "buff",
+      "value": 5,
+      "symbol": "💪",
+      "color": "#ff8a00",
+      "effect": "+5 к урону на 10 шагов"
+    },
+    "shield": {
+      "name": "Щит",
+      "type": "defense",
+      "value": 3,
+      "symbol": "🛡️",
+      "color": "#4488ff",
+      "effect": "+3 к защите"
+    },
+    "speedBoots": {
+      "name": "Сапоги скорости",
+      "type": "speed",
+      "value": 2,
+      "symbol": "👟",
+      "color": "#44ff44",
+      "effect": "Увеличивает дальность обзора"
+    },
+    "treasure": {
+      "name": "Сокровище",
+      "type": "treasure",
+      "value": 100,
+      "symbol": "💎",
+      "color": "#ffdd00",
+      "effect": "Ценный предмет"
+    },
+    "map": {
+      "name": "Карта уровня",
+      "type": "map",
+      "value": 1,
+      "symbol": "🗺️",
+      "color": "#8a8aff",
+      "effect": "Открывает всю карту текущего этажа"
+    },
+    "schematic": {
+      "name": "Схема лабиринта",
+      "type": "schematic",
+      "value": 1,
+      "symbol": "📋",
+      "color": "#44ff44",
+      "effect": "Открывает мини-карту"
+    },
+    "compass": {
+      "name": "Магический компас",
+      "type": "compass",
+      "value": 1,
+      "symbol": "🧭",
+      "color": "#ffdd00",
+      "effect": "Показывает направление к цели"
+    },
+    "goldCoin": {
+      "name": "Золотая монета",
+      "type": "gold",
+      "value": 10,
+      "symbol": "🪙",
+      "color": "#ffd700",
+      "effect": "10 золотых монет"
+    },
+    "goldPouch": {
+      "name": "Кошель с золотом",
+      "type": "gold",
+      "value": 50,
+      "symbol": "💰",
+      "color": "#ffd700",
+      "effect": "50 золотых монет"
+    },
+    "treasureChest": {
+      "name": "Сундук с сокровищами",
+      "type": "gold",
+      "value": 100,
+      "symbol": "💎",
+      "color": "#ffd700",
+      "effect": "100 золотых монет"
+    },
+    "torch": {
+      "name": "Магический факел",
+      "type": "torch",
+      "value": 10,
+      "symbol": "🔥",
+      "color": "#ff8a00",
+      "effect": "Освещает путь до препятствия, работает 10 раз"
+    },
+    "arrows": {
+      "name": "Стрелы",
+      "type": "ammo",
+      "value": 5,
+      "symbol": "➹",
+      "color": "#8a8aff",
+      "effect": "5 стрел для лука"
+    }
+  },
+  "skins": {
+    "default": {
+      "name": "Стандартный",
+      "symbol": "👤",
+      "color": "#4a8aff",
+      "price": 0,
+      "description": "Обычный герой",
+      "owned": true
+    },
+    "warrior": {
+      "name": "Воин",
+      "symbol": "🤺",
+      "color": "#ff8a00",
+      "price": 100,
+      "description": "Закаленный в боях воин",
+      "owned": false
+    },
+    "mage": {
+      "name": "Маг",
+      "symbol": "🧙",
+      "color": "#aa44ff",
+      "price": 150,
+      "description": "Властелин магии",
+      "owned": false
+    },
+    "assassin": {
+      "name": "Убийца",
+      "symbol": "🥷",
+      "color": "#44aa44",
+      "price": 120,
+      "description": "Быстрый и смертоносный",
+      "owned": false
+    },
+    "astroman": {
+      "name": "Космонавт",
+      "symbol": "🧑‍🚀",
+      "color": "#888888",
+      "price": 200,
+      "description": "В тяжелых доспехах",
+      "owned": false
+    },
+    "ufo": {
+      "name": "Инопланетянин",
+      "symbol": "👽",
+      "color": "#cd5c5c",
+      "price": 180,
+      "description": "Дикий и сильный",
+      "owned": false
+    },
+    "policeman": {
+      "name": "Полицейский",
+      "symbol": "👮",
+      "color": "#ffffff",
+      "price": 250,
+      "description": "Хранитель порядка",
+      "owned": false
+    },
+    "detectiv": {
+      "name": "Детектив",
+      "symbol": "🕵️",
+      "color": "#ff4444",
+      "price": 300,
+      "description": "Исчадие ада",
+      "owned": false
+    },
+    "angel": {
+      "name": "Ангел",
+      "symbol": "😇",
+      "color": "#ffffaa",
+      "price": 350,
+      "description": "Небесный посланник",
+      "owned": false
+    },
+    "ghost": {
+      "name": "Призрак",
+      "symbol": "👻",
+      "color": "#e0e0ff",
+      "price": 220,
+      "description": "Прозрачный дух",
+      "owned": false
+    },
+    "fireman": {
+      "name": "Пожарный",
+      "symbol": "👨‍🚒",
+      "color": "#ff8a00",
+      "price": 220,
+      "description": "Борец с огнем",
+      "owned": false
+    },
+    "farmman": {
+      "name": "Фермер",
+      "symbol": "👨‍🌾",
+      "color": "#8B4513",
+      "price": 220,
+      "description": "Труженик полей",
+      "owned": false
+    },
+    "engineer": {
+      "name": "Инженер",
+      "symbol": "👷",
+      "color": "#FFD700",
+      "price": 220,
+      "description": "Строитель",
+      "owned": false
+    },
+    "robot": {
+      "name": "Робот",
+      "symbol": "🤖",
+      "color": "#cccccc",
+      "price": 220,
+      "description": "Механический помощник",
+      "owned": false
+    },
+    "pilot": {
+      "name": "Пилот",
+      "symbol": "👨‍✈️",
+      "color": "#4169E1",
+      "price": 220,
+      "description": "Покоритель неба",
+      "owned": false
+    }
+  },
+  "shop": {
+    "healthPotionSmall": {
+      "name": "Малое зелье здоровья",
+      "effect": "Восстанавливает 20 HP",
+      "price": 25,
+      "icon": "🧪",
+      "color": "#ff4444",
+      "type": "consumable"
+    },
+    "healthPotionLarge": {
+      "name": "Большое зелье здоровья",
+      "effect": "Восстанавливает 50 HP",
+      "price": 50,
+      "icon": "🧪",
+      "color": "#ff0000",
+      "type": "consumable"
+    },
+    "strengthPotion": {
+      "name": "Зелье силы",
+      "effect": "+5 к урону на 10 шагов",
+      "price": 40,
+      "icon": "💪",
+      "color": "#ff8a00",
+      "type": "consumable"
+    },
+    "shield": {
+      "name": "Щит",
+      "effect": "+3 к защите на 10 шагов",
+      "price": 35,
+      "icon": "🛡️",
+      "color": "#4488ff",
+      "type": "consumable"
+    },
+    "speedBoots": {
+      "name": "Сапоги скорости",
+      "effect": "+2 к обзору на 10 шагов",
+      "price": 30,
+      "icon": "👟",
+      "color": "#44ff44",
+      "type": "consumable"
+    },
+    "mapReveal": {
+      "name": "Свиток карты",
+      "effect": "Открывает часть карты этажа",
+      "price": 60,
+      "icon": "🗺️",
+      "color": "#8a8aff",
+      "type": "consumable"
+    },
+    "compassReveal": {
+      "name": "Компас",
+      "effect": "Показывает направление к выходу",
+      "price": 75,
+      "icon": "🧭",
+      "color": "#ffdd00",
+      "type": "consumable"
+    },
+    "teleportScroll": {
+      "name": "Свиток телепортации",
+      "effect": "Телепортирует на случайный этаж",
+      "price": 100,
+      "icon": "🌀",
+      "color": "#64b4ff",
+      "type": "consumable"
+    },
+    "damageBoost": {
+      "name": "Усиление оружия",
+      "effect": "+2 к урону текущего оружия",
+      "price": 120,
+      "icon": "🎯",
+      "color": "#ff4444",
+      "type": "permanent"
+    },
+    "healthUpgrade": {
+      "name": "Увеличение здоровья",
+      "effect": "+25 к максимальному здоровью",
+      "price": 150,
+      "icon": "❤️",
+      "color": "#ff4444",
+      "type": "permanent"
+    },
+    "torch": {
+      "name": "Магический факел",
+      "effect": "Освещает путь (10 использований)",
+      "price": 80,
+      "icon": "🔥",
+      "color": "#ff8a00",
+      "type": "consumable"
+    },
+    "dagger": {
+      "name": "Кинжал",
+      "effect": "Урон от Кинжала 5",
+      "price": 50,
+      "icon": "🗡️",
+      "color": "#8a8aff",
+      "type": "weapon",
+      "weaponId": "dagger"
+    },
+    "sword": {
+      "name": "Меч",
+      "effect": "Урон от Меча 8",
+      "price": 100,
+      "icon": "⚔️",
+      "color": "#ff8a00",
+      "type": "weapon",
+      "weaponId": "sword"
+    },
+    "axe": {
+      "name": "Топор",
+      "effect": "Урон от Топора 12",
+      "price": 150,
+      "icon": "🪓",
+      "color": "#ff4444",
+      "type": "weapon",
+      "weaponId": "axe"
+    },
+    "bow": {
+      "name": "Лук",
+      "effect": "Атакует врагов на расстоянии",
+      "price": 150,
+      "icon": "🏹",
+      "color": "#8a6642",
+      "type": "weapon",
+      "weaponId": "bow"
+    },
+    "magicStaff": {
+      "name": "Посох",
+      "effect": "Урон от Посоха 15",
+      "price": 175,
+      "icon": "🦯",
+      "color": "#aa44ff",
+      "type": "weapon",
+      "weaponId": "magicStaff"
+    },
+    "legendary": {
+      "name": "Легендарный",
+      "effect": "Урон от Легендарного 20",
+      "price": 220,
+      "icon": "🔫",
+      "color": "#ffdd00",
+      "type": "weapon",
+      "weaponId": "legendary"
+    },
+    "arrows": {
+      "name": "Набор стрел",
+      "effect": "5 стрел для лука",
+      "price": 30,
+      "icon": "➹",
+      "color": "#8a8aff",
+      "type": "consumable"
+    }
+  },
+  "balance": {
+    "critChance": 10,
+    "critMultiplier": 1.5,
+    "healthRegenPerKill": 5,
+    "xpToNextLevel": 100,
+    "damageBonusPerLevel": 0.5,
+    "defenseBonusPerLevel": 0.3,
+    "xpMultiplier": 1,
+    "comboTimeout": 3000,
+    "comboXpBonus": 1.2,
+    "comboHealthBonus": 2,
+    "comboGoldChance": 1.5
+  }
+}
