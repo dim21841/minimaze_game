@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор игры Лабиринт</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2a;
+            color: #e6e6e6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #8a8aff;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(138, 138, 255, 0.5);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a5a;
+            border-radius: 8px;
+            color: #b0b0ff;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+            border-color: #8a8aff;
+        }
+        
+        .tab.active {
+            background: linear-gradient(to bottom, #4a4a8a, #3a3a6a);
+            border-color: #8a8aff;
+            color: #ffffff;
+        }
+        
+        .panel {
+            background: linear-gradient(to bottom, #1a1a2a, #0a0a14);
+            border: 2px solid #4a4a5a;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .panel-title {
+            color: #8a8aff;
+            font-size: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #4a4a5a;
+            padding-bottom: 10px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .preview-section {
+            background: rgba(20, 20, 40, 0.8);
+            border: 2px solid #4a4a5a;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .preview-title {
+            color: #ffd700;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .preview-item {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a5a;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-direction: column;
+            padding: 5px;
+        }
+        
+        .preview-item span {
+            font-size: 10px;
+            color: #b0b0ff;
+            margin-top: 2px;
+        }
+        
+        .preview-level {
+            display: grid;
+            grid-template-columns: repeat(15, 20px);
+            gap: 1px;
+            background: #0a0a14;
+            padding: 10px;
+            border-radius: 5px;
+            justify-content: center;
+        }
+        
+        .level-cell {
+            width: 20px;
+            height: 20px;
+            border-radius: 2px;
+        }
+        
+        .level-wall {
+            background: #4a4a5a;
+        }
+        
+        .level-floor {
+            background: #2a2a4a;
+        }
+        
+        .level-player {
+            background: #8a8aff;
+            position: relative;
+        }
+        
+        .level-exit {
+            background: #ff6464;
+            position: relative;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #b0b0ff;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="color"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a4a;
+            border: 2px solid #4a4a5a;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a5a;
+            border-radius: 8px;
+            color: #b0b0ff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: linear-gradient(to bottom, #3a3a6a, #2a2a5a);
+            border-color: #8a8aff;
+        }
+        
+        button.primary {
+            background: linear-gradient(to bottom, #4a4a8a, #3a3a6a);
+            border-color: #8a8aff;
+            color: white;
+        }
+        
+        button.save-btn {
+            background: linear-gradient(to bottom, #44aa44, #2a8a2a);
+            border-color: #44ff44;
+            color: white;
+        }
+        
+        button.server-btn {
+            background: linear-gradient(to bottom, #4444aa, #2a2a8a);
+            border-color: #8a8aff;
+            color: white;
+        }
+        
+        button.load-btn {
+            background: linear-gradient(to bottom, #aa44aa, #6a2a6a);
+            border-color: #ff8aff;
+            color: white;
+        }
+        
+        .item-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #4a4a5a;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .item-card {
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #4a4a5a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .item-card.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .item-symbol {
+            font-size: 32px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a3a;
+            border-radius: 8px;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 5px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        .item-actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .delete-btn {
+            background: linear-gradient(to bottom, #4a2a2a, #3a1a1a);
+            border-color: #ff6464;
+            color: #ffaaaa;
+        }
+        
+        .json-output {
+            background: #0a0a14;
+            border: 2px solid #4a4a5a;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #8a8aff;
+            margin-top: 5px;
+        }
+        
+        .slider-value {
+            display: inline-block;
+            min-width: 40px;
+            text-align: center;
+            background: #2a2a4a;
+            padding: 2px 5px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        
+        .auto-save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 2px solid #44ff44;
+            border-radius: 10px;
+            padding: 10px 20px;
+            color: #44ff44;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            animation: fadeInOut 2s;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            20% { opacity: 1; transform: translateY(0); }
+            80% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+
+        .price-input {
+            background: #2a2a4a;
+            border: 2px solid #ffd700;
+            border-radius: 6px;
+            padding: 10px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .skin-preview-large {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(to bottom, #2a2a4a, #1a1a3a);
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin: 0 auto 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Индикатор автосохранения -->
+    <div class="auto-save-indicator" id="autoSaveIndicator">✅ Конфигурация сохранена</div>
+    
+    <div class="container">
+        <h1>⚙️ РЕДАКТОР ИГРЫ ЛАБИРИНТ ⚙️</h1>
+        
+        <!-- Вкладки -->
+        <div class="tabs">
+            <div class="tab active" data-tab="global">🌍 Глобальные</div>
+            <div class="tab" data-tab="player">👤 Игрок</div>
+            <div class="tab" data-tab="enemies">👾 Враги</div>
+            <div class="tab" data-tab="weapons">⚔️ Оружие</div>
+            <div class="tab" data-tab="items">🧪 Предметы</div>
+            <div class="tab" data-tab="skins">👕 Скины</div>
+            <div class="tab" data-tab="shop">🏪 Магазин</div>
+            <div class="tab" data-tab="balance">⚖️ Баланс</div>
+            <div class="tab" data-tab="export">📤 Экспорт</div>
+        </div>
+        
+        <!-- Панель: Глобальные параметры -->
+        <div class="panel active" id="global-panel">
+            <div class="panel-title">🌍 Глобальные параметры</div>
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>Количество уровней (этажей):</label>
+                        <input type="number" id="global-levels" min="1" max="100" value="21">
+                    </div>
+                    <div class="form-group">
+                        <label>Размер уровня:</label>
+                        <input type="number" id="global-size" min="10" max="50" value="25">
+                    </div>
+                    <div class="form-group">
+                        <label>Seed генерации:</label>
+                        <input type="text" id="global-seed" value="Date.now()">
+                    </div>
+                    <div class="form-group">
+                        <label>Размер ячейки (px):</label>
+                        <input type="number" id="global-cellSize" min="20" max="80" value="40">
+                    </div>
+                    <div class="form-group">
+                        <label>Тема по умолчанию:</label>
+                        <select id="global-theme">
+                            <option value="dungeon">Подземелье</option>
+                            <option value="forest">Лес</option>
+                            <option value="castle">Замок</option>
+                            <option value="ice">Ледяной</option>
+                            <option value="lava">Вулкан</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Дистанция тумана:</label>
+                        <input type="range" id="global-fog" min="1" max="10" value="2">
+                        <span class="slider-value" id="global-fog-value">2</span>
+                    </div>
+                </div>
+                <div class="preview-section">
+                    <div class="preview-title">Предпросмотр уровня (15x15)</div>
+                    <div id="level-preview" class="preview-level"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Игрок -->
+        <div class="panel" id="player-panel">
+            <div class="panel-title">👤 Параметры игрока</div>
+            <div class="grid-2">
+                <div>
+                    <div class="form-group">
+                        <label>Начальное здоровье:</label>
+                        <input type="number" id="player-health" min="1" max="1000" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Максимальное здоровье:</label>
+                        <input type="number" id="player-maxHealth" min="1" max="1000" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Базовый урон:</label>
+                        <input type="number" id="player-damage" min="1" max="100" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label>Базовая защита:</label>
+                        <input type="number" id="player-defense" min="0" max="100" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Начальный уровень:</label>
+                        <input type="number" id="player-level" min="1" max="100" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Начальное золото:</label>
+                        <input type="number" id="player-gold" min="0" max="10000" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Начальные стрелы:</label>
+                        <input type="number" id="player-arrows" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div>
+                    <div class="preview-section">
+                        <div class="preview-title">Инвентарь</div>
+                        <div id="inventory-preview" class="preview-grid"></div>
+                        <div class="form-group">
+                            <label>Слот 1:</label>
+                            <select id="weapon-slot-0"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Слот 2:</label>
+                            <select id="weapon-slot-1"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Слот 3:</label>
+                            <select id="weapon-slot-2"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Слот 4:</label>
+                            <select id="weapon-slot-3"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Враги -->
+        <div class="panel" id="enemies-panel">
+            <div class="panel-title">👾 Редактор врагов</div>
+            <div class="grid-2">
+                <div>
+                    <div class="item-list" id="enemies-list"></div>
+                    <button onclick="addNewEnemy()" class="primary" style="margin-top: 15px;">➕ Добавить врага</button>
+                </div>
+                <div id="enemy-editor" style="display: none;">
+                    <div class="preview-section">
+                        <div class="preview-title">Редактирование врага</div>
+                        <input type="hidden" id="enemy-id">
+                        <div class="form-group">
+                            <label>Имя:</label>
+                            <input type="text" id="enemy-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Здоровье:</label>
+                            <input type="number" id="enemy-health">
+                        </div>
+                        <div class="form-group">
+                            <label>Урон:</label>
+                            <input type="number" id="enemy-damage">
+                        </div>
+                        <div class="form-group">
+                            <label>Символ:</label>
+                            <input type="text" id="enemy-symbol" maxlength="2">
+                        </div>
+                        <div class="form-group">
+                            <label>Цвет:</label>
+                            <input type="color" id="enemy-color">
+                        </div>
+                        <div class="form-group">
+                            <label>Опыт:</label>
+                            <input type="number" id="enemy-xp">
+                        </div>
+                        <div class="form-group">
+                            <label>Редкость (1-5):</label>
+                            <input type="number" id="enemy-rarity" min="1" max="5">
+                        </div>
+                        <div class="preview-item" id="enemy-preview" style="margin: 10px auto;">
+                            <span id="enemy-preview-symbol">👾</span>
+                            <span id="enemy-preview-name">Враг</span>
+                        </div>
+                        <button onclick="saveEnemy()">💾 Сохранить</button>
+                        <button onclick="cancelEnemyEdit()" class="delete-btn">✕ Отмена</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Оружие -->
+        <div class="panel" id="weapons-panel">
+            <div class="panel-title">⚔️ Редактор оружия</div>
+            <div class="grid-2">
+                <div>
+                    <div class="item-list" id="weapons-list"></div>
+                    <button onclick="addNewWeapon()" class="primary" style="margin-top: 15px;">➕ Добавить оружие</button>
+                </div>
+                <div id="weapon-editor" style="display: none;">
+                    <div class="preview-section">
+                        <div class="preview-title">Редактирование оружия</div>
+                        <input type="hidden" id="weapon-id">
+                        <div class="form-group">
+                            <label>Название:</label>
+                            <input type="text" id="weapon-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Урон:</label>
+                            <input type="number" id="weapon-damage">
+                        </div>
+                        <div class="form-group">
+                            <label>Символ:</label>
+                            <input type="text" id="weapon-symbol" maxlength="2">
+                        </div>
+                        <div class="form-group">
+                            <label>Цвет:</label>
+                            <input type="color" id="weapon-color">
+                        </div>
+                        <div class="form-group">
+                            <label>Редкость:</label>
+                            <input type="number" id="weapon-rarity" min="1" max="6">
+                        </div>
+                        <div class="form-group">
+                            <label>Тип:</label>
+                            <select id="weapon-type">
+                                <option value="true">Ближний бой</option>
+                                <option value="false">Дальний бой</option>
+                            </select>
+                        </div>
+                        <div id="weapon-range-group" style="display: none;">
+                            <label>Дальность:</label>
+                            <input type="number" id="weapon-range" value="5">
+                        </div>
+                        <div class="preview-item" id="weapon-preview" style="margin: 10px auto;">
+                            <span id="weapon-preview-symbol">⚔️</span>
+                            <span id="weapon-preview-name">Оружие</span>
+                        </div>
+                        <button onclick="saveWeapon()">💾 Сохранить</button>
+                        <button onclick="cancelWeaponEdit()" class="delete-btn">✕ Отмена</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Предметы -->
+        <div class="panel" id="items-panel">
+            <div class="panel-title">🧪 Редактор предметов</div>
+            <div class="grid-2">
+                <div>
+                    <div class="item-list" id="items-list"></div>
+                    <button onclick="addNewItem()" class="primary" style="margin-top: 15px;">➕ Добавить предмет</button>
+                </div>
+                <div id="item-editor" style="display: none;">
+                    <div class="preview-section">
+                        <div class="preview-title">Редактирование предмета</div>
+                        <input type="hidden" id="item-id">
+                        <div class="form-group">
+                            <label>Название:</label>
+                            <input type="text" id="item-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Тип:</label>
+                            <select id="item-type">
+                                <option value="heal">Лечение</option>
+                                <option value="buff">Усиление</option>
+                                <option value="defense">Защита</option>
+                                <option value="speed">Скорость</option>
+                                <option value="treasure">Сокровище</option>
+                                <option value="map">Карта</option>
+                                <option value="compass">Компас</option>
+                                <option value="gold">Золото</option>
+                                <option value="torch">Факел</option>
+                                <option value="ammo">Стрелы</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Значение:</label>
+                            <input type="number" id="item-value">
+                        </div>
+                        <div class="form-group">
+                            <label>Символ:</label>
+                            <input type="text" id="item-symbol" maxlength="2">
+                        </div>
+                        <div class="form-group">
+                            <label>Цвет:</label>
+                            <input type="color" id="item-color">
+                        </div>
+                        <div class="form-group">
+                            <label>Описание:</label>
+                            <input type="text" id="item-effect">
+                        </div>
+                        <div class="preview-item" id="item-preview" style="margin: 10px auto;">
+                            <span id="item-preview-symbol">🧪</span>
+                            <span id="item-preview-name">Предмет</span>
+                        </div>
+                        <button onclick="saveItem()">💾 Сохранить</button>
+                        <button onclick="cancelItemEdit()" class="delete-btn">✕ Отмена</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Скины -->
+        <div class="panel" id="skins-panel">
+            <div class="panel-title">👕 Редактор скинов</div>
+            <div class="grid-2">
+                <div>
+                    <div class="item-list" id="skins-list"></div>
+                    <button onclick="addNewSkin()" class="primary" style="margin-top: 15px;">➕ Добавить скин</button>
+                </div>
+                <div id="skin-editor" style="display: none;">
+                    <div class="preview-section">
+                        <div class="preview-title">Редактирование скина</div>
+                        <input type="hidden" id="skin-id">
+                        
+                        <div class="skin-preview-large" id="skin-preview-large">
+                            <span id="skin-preview-symbol">👤</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>ID скина:</label>
+                            <input type="text" id="skin-id-input" placeholder="например: warrior_custom">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Название:</label>
+                            <input type="text" id="skin-name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Символ:</label>
+                            <input type="text" id="skin-symbol" maxlength="2">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Цвет:</label>
+                            <input type="color" id="skin-color">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Цена в магазине:</label>
+                            <input type="number" id="skin-price" class="price-input" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Описание:</label>
+                            <input type="text" id="skin-description">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Доступен по умолчанию:</label>
+                            <select id="skin-owned">
+                                <option value="true">Да</option>
+                                <option value="false">Нет (покупной)</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="saveSkin()">💾 Сохранить</button>
+                        <button onclick="cancelSkinEdit()" class="delete-btn">✕ Отмена</button>
+                        <button onclick="deleteCurrentSkin()" class="delete-btn">🗑️ Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Магазин -->
+        <div class="panel" id="shop-panel">
+            <div class="panel-title">🏪 Редактор магазина</div>
+            <div class="grid-2">
+                <div>
+                    <div class="item-list" id="shop-items-list"></div>
+                    <button onclick="addNewShopItem()" class="primary" style="margin-top: 15px;">➕ Добавить товар</button>
+                </div>
+                <div id="shop-item-editor" style="display: none;">
+                    <div class="preview-section">
+                        <div class="preview-title">Редактирование товара</div>
+                        <input type="hidden" id="shop-item-id">
+                        
+                        <div class="preview-item" id="shop-item-preview" style="width: 80px; height: 80px; margin: 10px auto;">
+                            <span id="shop-item-preview-symbol" style="font-size: 32px;">🛒</span>
+                            <span id="shop-item-preview-name">Товар</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Название:</label>
+                            <input type="text" id="shop-item-name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Тип товара:</label>
+                            <select id="shop-item-type" onchange="onShopItemTypeChange()">
+                                <option value="consumable">Расходуемый предмет</option>
+                                <option value="permanent">Постоянное улучшение</option>
+                                <option value="weapon">Оружие</option>
+                                <option value="skin">Скин</option>
+                            </select>
+                        </div>
+                        
+                        <div id="shop-item-ref-select" style="display: none;">
+                            <div class="form-group">
+                                <label>Выберите оружие:</label>
+                                <select id="shop-item-weapon-select"></select>
+                            </div>
+                        </div>
+                        
+                        <div id="shop-item-skin-select" style="display: none;">
+                            <div class="form-group">
+                                <label>Выберите скин:</label>
+                                <select id="shop-item-skin-select"></select>
+                            </div>
+                        </div>
+                        
+                        <div id="shop-item-custom-fields">
+                            <div class="form-group">
+                                <label>Описание:</label>
+                                <input type="text" id="shop-item-effect">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Символ:</label>
+                                <input type="text" id="shop-item-symbol" maxlength="2">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Цвет:</label>
+                                <input type="color" id="shop-item-color">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Цена (🪙):</label>
+                            <input type="number" id="shop-item-price" class="price-input" value="100">
+                        </div>
+                        
+                        <button onclick="saveShopItem()">💾 Сохранить</button>
+                        <button onclick="cancelShopItemEdit()" class="delete-btn">✕ Отмена</button>
+                        <button onclick="deleteCurrentShopItem()" class="delete-btn">🗑️ Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Баланс -->
+        <div class="panel" id="balance-panel">
+            <div class="panel-title">⚖️ Настройки баланса</div>
+            <div class="grid-3">
+                <div class="preview-section">
+                    <div class="preview-title">Боевые параметры</div>
+                    <div class="form-group">
+                        <label>Шанс крита (%):</label>
+                        <input type="number" id="balance-critChance" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Множитель крита:</label>
+                        <input type="number" id="balance-critMultiplier" value="1.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Регенерация HP:</label>
+                        <input type="number" id="balance-healthRegen" value="5">
+                    </div>
+                </div>
+                <div class="preview-section">
+                    <div class="preview-title">Прогрессия</div>
+                    <div class="form-group">
+                        <label>Опыт до 2 уровня:</label>
+                        <input type="number" id="balance-xpToNext" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Бонус урона/уровень:</label>
+                        <input type="number" id="balance-damagePerLevel" value="0.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Бонус защиты/уровень:</label>
+                        <input type="number" id="balance-defensePerLevel" value="0.3" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Множитель опыта:</label>
+                        <input type="number" id="balance-xpMultiplier" value="1.0" step="0.1">
+                    </div>
+                </div>
+                <div class="preview-section">
+                    <div class="preview-title">Комбо-система</div>
+                    <div class="form-group">
+                        <label>Таймаут комбо (мс):</label>
+                        <input type="number" id="balance-comboTimeout" value="3000">
+                    </div>
+                    <div class="form-group">
+                        <label>Бонус опыта (x):</label>
+                        <input type="number" id="balance-comboXpBonus" value="1.2" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Бонус HP:</label>
+                        <input type="number" id="balance-comboHealthBonus" value="2">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Панель: Экспорт -->
+        <div class="panel" id="export-panel">
+            <div class="panel-title">📤 Экспорт конфигурации</div>
+            <div class="action-bar">
+                <button onclick="saveToServer()" class="server-btn">🌐 Сохранить на сервер</button>
+                <button onclick="loadFromServer()" class="load-btn">🌐 Загрузить с сервера</button>
+                <button onclick="saveToGameFile()" class="save-btn">💾 Скачать файл</button>
+                <button onclick="exportToJSON()">📥 Скачать JSON</button>
+                <button onclick="importFromJSON()">📤 Загрузить JSON</button>
+                <button onclick="copyToClipboard()">📋 Копировать</button>
+                <button onclick="generateGameCode()">⚡ Сгенерировать код</button>
+            </div>
+            <div class="json-output" id="json-output">// JSON конфигурация</div>
+        </div>
+    </div>
+
+    <script>
+        // ===============================
+        // БАЗОВЫЕ ДАННЫЕ
+        // ===============================
+        const defaultConfig = {
+            global: { levels: 21, levelSize: 25, cellSize: 40, seed: "Date.now()", currentTheme: "dungeon", fogDistance: 2 },
+            player: { health: 100, maxHealth: 100, damage: 3, defense: 0, level: 1, gold: 0, arrows: 0, inventory: ["fist", null, null, null] },
+            enemies: {
+                rat: { name: "Крыса", health: 15, damage: 3, symbol: "🐀", color: "#8a6642", xp: 10, rarity: 1 },
+                goblin: { name: "Гоблин", health: 25, damage: 5, symbol: "👺", color: "#44aa44", xp: 20, rarity: 2 },
+                gorilla: { name: "Горилла", health: 30, damage: 6, symbol: "🦍", color: "#cccccc", xp: 25, rarity: 2 },
+                zombie: { name: "Зомби", health: 35, damage: 6, symbol: "🧟‍♂️", color: "#cccccc", xp: 30, rarity: 2 },
+                skeleton: { name: "Скелет", health: 40, damage: 7, symbol: "💀", color: "#cccccc", xp: 35, rarity: 3 },
+                bison: { name: "Бизон", health: 45, damage: 9, symbol: "🦬", color: "#cccccc", xp: 40, rarity: 3 },
+                orc: { name: "Орк", health: 60, damage: 10, symbol: "🧌", color: "#664444", xp: 50, rarity: 4 },
+                crocodile: { name: "Крокодил", health: 70, damage: 12, symbol: "🐊", color: "#664444", xp: 70, rarity: 4 },
+                snake: { name: "Змея", health: 85, damage: 14, symbol: "🐍", color: "#ff4444", xp: 85, rarity: 4 },
+                dragon: { name: "Дракон", health: 100, damage: 15, symbol: "🐉", color: "#ff4444", xp: 100, rarity: 5 },
+                trex: { name: "Тиранозавр", health: 150, damage: 20, symbol: "🦖", color: "#ff4444", xp: 130, rarity: 5 }
+            },
+            weapons: {
+                fist: { name: "Кулаки", damage: 3, symbol: "👊", color: "#aaa", rarity: 1, melee: true },
+                dagger: { name: "Кинжал", damage: 5, symbol: "🗡️", color: "#8a8aff", rarity: 2, melee: true },
+                sword: { name: "Меч", damage: 8, symbol: "⚔️", color: "#ff8a00", rarity: 3, melee: true },
+                axe: { name: "Топор", damage: 12, symbol: "🪓", color: "#ff4444", rarity: 4, melee: true },
+                bow: { name: "Лук", damage: 7, symbol: "🏹", color: "#8a6642", rarity: 3, melee: false, range: 5 },
+                magicStaff: { name: "Посох", damage: 15, symbol: "🦯", color: "#aa44ff", rarity: 5, melee: true },
+                legendary: { name: "Легендарный", damage: 20, symbol: "🔫", color: "#ffdd00", rarity: 6, melee: true }
+            },
+            items: {
+                healthPotion: { name: "Зелье здоровья", type: "heal", value: 30, symbol: "🧪", color: "#ff4444", effect: "Восстанавливает здоровье" },
+                strengthPotion: { name: "Зелье силы", type: "buff", value: 5, symbol: "💪", color: "#ff8a00", effect: "+5 к урону на 10 шагов" },
+                shield: { name: "Щит", type: "defense", value: 3, symbol: "🛡️", color: "#4488ff", effect: "+3 к защите" },
+                speedBoots: { name: "Сапоги скорости", type: "speed", value: 2, symbol: "👟", color: "#44ff44", effect: "Увеличивает дальность обзора" },
+                treasure: { name: "Сокровище", type: "treasure", value: 100, symbol: "💎", color: "#ffdd00", effect: "Ценный предмет" },
+                map: { name: "Карта уровня", type: "map", value: 1, symbol: "🗺️", color: "#8a8aff", effect: "Открывает всю карту" },
+                compass: { name: "Компас", type: "compass", value: 1, symbol: "🧭", color: "#ffdd00", effect: "Показывает направление" },
+                goldCoin: { name: "Золотая монета", type: "gold", value: 10, symbol: "🪙", color: "#ffd700", effect: "10 золотых" },
+                torch: { name: "Факел", type: "torch", value: 10, symbol: "🔥", color: "#ff8a00", effect: "Освещает путь" },
+                arrows: { name: "Стрелы", type: "ammo", value: 5, symbol: "➹", color: "#8a8aff", effect: "5 стрел" }
+            },
+            skins: {
+                default: { name: "Стандартный", symbol: "👤", color: "#4a8aff", price: 0, description: "Обычный герой", owned: true },
+                warrior: { name: "Воин", symbol: "🤺", color: "#ff8a00", price: 100, description: "Закаленный воин", owned: false },
+                mage: { name: "Маг", symbol: "🧙", color: "#aa44ff", price: 150, description: "Властелин магии", owned: false },
+                assassin: { name: "Убийца", symbol: "🥷", color: "#44aa44", price: 120, description: "Быстрый и смертоносный", owned: false },
+                astroman: { name: "Космонавт", symbol: "🧑‍🚀", color: "#888888", price: 200, description: "В тяжелых доспехах", owned: false },
+                ufo: { name: "Инопланетянин", symbol: "👽", color: "#cd5c5c", price: 180, description: "Дикий и сильный", owned: false },
+                policeman: { name: "Полицейский", symbol: "👮", color: "#ffffff", price: 250, description: "Хранитель порядка", owned: false },
+                detectiv: { name: "Детектив", symbol: "🕵️", color: "#ff4444", price: 300, description: "Детектив", owned: false },
+                angel: { name: "Ангел", symbol: "😇", color: "#ffffaa", price: 350, description: "Небесный посланник", owned: false },
+                ghost: { name: "Призрак", symbol: "👻", color: "#e0e0ff", price: 220, description: "Прозрачный дух", owned: false },
+                fireman: { name: "Пожарный", symbol: "👨‍🚒", color: "#ff8a00", price: 220, description: "Борец с огнем", owned: false },
+                farmman: { name: "Фермер", symbol: "👨‍🌾", color: "#8B4513", price: 220, description: "Труженик полей", owned: false },
+                engineer: { name: "Инженер", symbol: "👷", color: "#FFD700", price: 220, description: "Строитель", owned: false },
+                robot: { name: "Робот", symbol: "🤖", color: "#cccccc", price: 220, description: "Механический помощник", owned: false },
+                pilot: { name: "Пилот", symbol: "👨‍✈️", color: "#4169E1", price: 220, description: "Покоритель неба", owned: false }
+            },
+            shop: {
+                healthPotionSmall: { name: "Малое зелье здоровья", effect: "Восстанавливает 20 HP", price: 25, icon: "🧪", color: "#ff4444", type: "consumable" },
+                healthPotionLarge: { name: "Большое зелье здоровья", effect: "Восстанавливает 50 HP", price: 50, icon: "🧪", color: "#ff0000", type: "consumable" },
+                strengthPotion: { name: "Зелье силы", effect: "+5 к урону на 10 шагов", price: 40, icon: "💪", color: "#ff8a00", type: "consumable" },
+                shield: { name: "Щит", effect: "+3 к защите на 10 шагов", price: 35, icon: "🛡️", color: "#4488ff", type: "consumable" },
+                speedBoots: { name: "Сапоги скорости", effect: "+2 к обзору на 10 шагов", price: 30, icon: "👟", color: "#44ff44", type: "consumable" },
+                mapReveal: { name: "Свиток карты", effect: "Открывает часть карты", price: 60, icon: "🗺️", color: "#8a8aff", type: "consumable" },
+                compassReveal: { name: "Компас", effect: "Показывает направление", price: 75, icon: "🧭", color: "#ffdd00", type: "consumable" },
+                teleportScroll: { name: "Свиток телепортации", effect: "Телепортирует", price: 100, icon: "🌀", color: "#64b4ff", type: "consumable" },
+                damageBoost: { name: "Усиление оружия", effect: "+2 к урону", price: 120, icon: "⚔️", color: "#ff4444", type: "permanent" },
+                healthUpgrade: { name: "Увеличение здоровья", effect: "+25 HP max", price: 150, icon: "❤️", color: "#ff4444", type: "permanent" },
+                torch: { name: "Факел", effect: "Освещает путь (10 использований)", price: 80, icon: "🔥", color: "#ff8a00", type: "consumable" },
+                arrows: { name: "Стрелы", effect: "5 стрел", price: 30, icon: "➹", color: "#8a8aff", type: "consumable" }
+            },
+            balance: {
+                critChance: 10,
+                critMultiplier: 1.5,
+                healthRegenPerKill: 5,
+                xpToNextLevel: 100,
+                damageBonusPerLevel: 0.5,
+                defenseBonusPerLevel: 0.3,
+                xpMultiplier: 1.0,
+                comboTimeout: 3000,
+                comboXpBonus: 1.2,
+                comboHealthBonus: 2
+            }
+        };
+
+        let config = JSON.parse(JSON.stringify(defaultConfig));
+        let currentEnemyId = null, currentWeaponId = null, currentItemId = null, currentSkinId = null, currentShopItemId = null;
+
+        // ===============================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ===============================
+        document.addEventListener('DOMContentLoaded', function() {
+            initTabs();
+            
+            const savedConfig = localStorage.getItem('mazeEditorConfig');
+            if (savedConfig) {
+                try {
+                    const loadedConfig = JSON.parse(savedConfig);
+                    
+                    // Гарантируем наличие всех необходимых разделов
+                    config = {
+                        global: loadedConfig.global || defaultConfig.global,
+                        player: loadedConfig.player || defaultConfig.player,
+                        enemies: loadedConfig.enemies || defaultConfig.enemies,
+                        weapons: loadedConfig.weapons || defaultConfig.weapons,
+                        items: loadedConfig.items || defaultConfig.items,
+                        skins: loadedConfig.skins || defaultConfig.skins,
+                        shop: loadedConfig.shop || defaultConfig.shop,
+                        balance: loadedConfig.balance || defaultConfig.balance
+                    };
+                    
+                    showAutoSaveIndicator('📂 Загружена сохраненная конфигурация');
+                } catch (e) {
+                    console.log('Ошибка загрузки сохранения, используем настройки по умолчанию');
+                    config = JSON.parse(JSON.stringify(defaultConfig));
+                }
+            } else {
+                config = JSON.parse(JSON.stringify(defaultConfig));
+            }
+            
+            updateAllInputs();
+            generatePreviewLevel();
+            updateWeaponSelects();
+            renderEnemiesList();
+            renderWeaponsList();
+            renderItemsList();
+            renderSkinsList();
+            renderShopItemsList();
+            
+            setupAutoSave();
+        });
+
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab + '-panel').classList.add('active');
+                });
+            });
+        }
+
+        function showAutoSaveIndicator(msg) {
+            let ind = document.getElementById('autoSaveIndicator');
+            ind.textContent = msg;
+            ind.style.display = 'block';
+            setTimeout(() => ind.style.display = 'none', 2000);
+        }
+
+        function setupAutoSave() {
+            setInterval(() => { collectCurrentConfig(); saveToStorage(); }, 30000);
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('mazeEditorConfig', JSON.stringify(config));
+        }
+
+        function autoSave() {
+            collectCurrentConfig();
+            saveToStorage();
+            showAutoSaveIndicator('📝 Автосохранение...');
+        }
+
+        // ===============================
+        // СБОР ДАННЫХ ИЗ ФОРМ - ЭТО ВАЖНО!
+        // ===============================
+        function collectCurrentConfig() {
+            config.global.levels = parseInt(document.getElementById('global-levels').value);
+            config.global.levelSize = parseInt(document.getElementById('global-size').value);
+            config.global.cellSize = parseInt(document.getElementById('global-cellSize').value);
+            config.global.seed = document.getElementById('global-seed').value;
+            config.global.currentTheme = document.getElementById('global-theme').value;
+            config.global.fogDistance = parseInt(document.getElementById('global-fog').value);
+            
+            config.player.health = parseInt(document.getElementById('player-health').value);
+            config.player.maxHealth = parseInt(document.getElementById('player-maxHealth').value);
+            config.player.damage = parseInt(document.getElementById('player-damage').value);
+            config.player.defense = parseInt(document.getElementById('player-defense').value);
+            config.player.level = parseInt(document.getElementById('player-level').value);
+            config.player.gold = parseInt(document.getElementById('player-gold').value);
+            config.player.arrows = parseInt(document.getElementById('player-arrows').value);
+            
+            config.balance.critChance = parseInt(document.getElementById('balance-critChance').value);
+            config.balance.critMultiplier = parseFloat(document.getElementById('balance-critMultiplier').value);
+            config.balance.healthRegenPerKill = parseInt(document.getElementById('balance-healthRegen').value);
+            config.balance.xpToNextLevel = parseInt(document.getElementById('balance-xpToNext').value);
+            config.balance.damageBonusPerLevel = parseFloat(document.getElementById('balance-damagePerLevel').value);
+            config.balance.defenseBonusPerLevel = parseFloat(document.getElementById('balance-defensePerLevel').value);
+            config.balance.xpMultiplier = parseFloat(document.getElementById('balance-xpMultiplier').value);
+            config.balance.comboTimeout = parseInt(document.getElementById('balance-comboTimeout').value);
+            config.balance.comboXpBonus = parseFloat(document.getElementById('balance-comboXpBonus').value);
+            config.balance.comboHealthBonus = parseInt(document.getElementById('balance-comboHealthBonus').value);
+            
+            return config;
+        }
+
+        // ===============================
+        // СОХРАНЕНИЕ НА СЕРВЕР
+        // ===============================
+        function saveToServer() {
+            const fullConfig = collectCurrentConfig();
+            
+            showAutoSaveIndicator('⏳ Сохранение на сервер...');
+            
+            fetch('save_config.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({config: fullConfig})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAutoSaveIndicator('✅ Конфигурация сохранена на сервере!');
+                } else {
+                    showAutoSaveIndicator('❌ Ошибка: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAutoSaveIndicator('❌ Ошибка соединения с сервером');
+            });
+        }
+
+        // ===============================
+        // ЗАГРУЗКА С СЕРВЕРА
+        // ===============================
+        function loadFromServer() {
+            showAutoSaveIndicator('⏳ Загрузка с сервера...');
+            
+            fetch('load_config.php')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Config not found on server');
+                })
+                .then(configData => {
+                    config = {
+                        global: configData.global || defaultConfig.global,
+                        player: configData.player || defaultConfig.player,
+                        enemies: configData.enemies || defaultConfig.enemies,
+                        weapons: configData.weapons || defaultConfig.weapons,
+                        items: configData.items || defaultConfig.items,
+                        skins: configData.skins || defaultConfig.skins,
+                        shop: configData.shop || defaultConfig.shop,
+                        balance: configData.balance || defaultConfig.balance
+                    };
+                    
+                    updateAllInputs();
+                    renderEnemiesList();
+                    renderWeaponsList();
+                    renderItemsList();
+                    renderSkinsList();
+                    renderShopItemsList();
+                    updateWeaponSelects();
+                    
+                    showAutoSaveIndicator('✅ Конфигурация загружена с сервера!');
+                    autoSave();
+                })
+                .catch(error => {
+                    console.error('Load error:', error);
+                    showAutoSaveIndicator('❌ Файл не найден на сервере');
+                });
+        }
+
+        // ===============================
+        // ОСТАЛЬНЫЕ ФУНКЦИИ (сокращенно)
+        // ===============================
+        function updateAllInputs() {
+            document.getElementById('global-levels').value = config.global.levels;
+            document.getElementById('global-size').value = config.global.levelSize;
+            document.getElementById('global-cellSize').value = config.global.cellSize;
+            document.getElementById('global-seed').value = config.global.seed;
+            document.getElementById('global-theme').value = config.global.currentTheme;
+            document.getElementById('global-fog').value = config.global.fogDistance;
+            document.getElementById('global-fog-value').textContent = config.global.fogDistance;
+            
+            document.getElementById('player-health').value = config.player.health;
+            document.getElementById('player-maxHealth').value = config.player.maxHealth;
+            document.getElementById('player-damage').value = config.player.damage;
+            document.getElementById('player-defense').value = config.player.defense;
+            document.getElementById('player-level').value = config.player.level;
+            document.getElementById('player-gold').value = config.player.gold;
+            document.getElementById('player-arrows').value = config.player.arrows;
+            
+            document.getElementById('balance-critChance').value = config.balance.critChance;
+            document.getElementById('balance-critMultiplier').value = config.balance.critMultiplier;
+            document.getElementById('balance-healthRegen').value = config.balance.healthRegenPerKill;
+            document.getElementById('balance-xpToNext').value = config.balance.xpToNextLevel;
+            document.getElementById('balance-damagePerLevel').value = config.balance.damageBonusPerLevel;
+            document.getElementById('balance-defensePerLevel').value = config.balance.defenseBonusPerLevel;
+            document.getElementById('balance-xpMultiplier').value = config.balance.xpMultiplier;
+            document.getElementById('balance-comboTimeout').value = config.balance.comboTimeout;
+            document.getElementById('balance-comboXpBonus').value = config.balance.comboXpBonus;
+            document.getElementById('balance-comboHealthBonus').value = config.balance.comboHealthBonus;
+            
+            document.getElementById('global-fog').addEventListener('input', function(e) {
+                document.getElementById('global-fog-value').textContent = e.target.value;
+            });
+        }
+
+        function generatePreviewLevel() {
+            let preview = document.getElementById('level-preview');
+            preview.innerHTML = '';
+            for (let y = 0; y < 15; y++) {
+                for (let x = 0; x < 15; x++) {
+                    let cell = document.createElement('div');
+                    cell.className = 'level-cell';
+                    if (x === 0 || y === 0 || x === 14 || y === 14) cell.classList.add('level-wall');
+                    else if (x === 7 && y === 7) cell.classList.add('level-player');
+                    else if (x === 13 && y === 13) cell.classList.add('level-exit');
+                    else if (Math.random() > 0.7) cell.classList.add('level-wall');
+                    else cell.classList.add('level-floor');
+                    preview.appendChild(cell);
+                }
+            }
+        }
+
+        function updateWeaponSelects() {
+            let opts = ['fist', ...Object.keys(config.weapons).filter(w => w !== 'fist')];
+            for (let i = 0; i < 4; i++) {
+                let sel = document.getElementById(`weapon-slot-${i}`);
+                if (!sel) continue;
+                sel.innerHTML = '';
+                opts.forEach(id => {
+                    let opt = document.createElement('option');
+                    opt.value = id;
+                    opt.textContent = config.weapons[id]?.name || id;
+                    sel.appendChild(opt);
+                });
+                if (config.player.inventory[i] && opts.includes(config.player.inventory[i])) {
+                    sel.value = config.player.inventory[i];
+                }
+                sel.addEventListener('change', function() {
+                    config.player.inventory[i] = this.value || null;
+                    updateInventoryPreview();
+                    autoSave();
+                });
+            }
+            updateInventoryPreview();
+        }
+
+        function updateInventoryPreview() {
+            let preview = document.getElementById('inventory-preview');
+            if (!preview) return;
+            preview.innerHTML = '';
+            config.player.inventory.forEach((id, i) => {
+                let w = config.weapons[id];
+                let div = document.createElement('div');
+                div.className = 'preview-item';
+                if (w) div.innerHTML = `<span style="color:${w.color}">${w.symbol}</span><span>${w.name}</span>`;
+                else div.innerHTML = `<span style="color:#666">+</span><span>Пусто</span>`;
+                preview.appendChild(div);
+            });
+        }
+
+        function renderEnemiesList() {
+            let list = document.getElementById('enemies-list');
+            if (!list) return;
+            list.innerHTML = '';
+            Object.entries(config.enemies).forEach(([id, e]) => {
+                let card = document.createElement('div');
+                card.className = `item-card ${currentEnemyId === id ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="item-header" onclick="selectEnemy('${id}')">
+                        <div class="item-symbol" style="color:${e.color}">${e.symbol}</div>
+                        <div><div class="item-name">${e.name}</div><div style="font-size:12px;">HP:${e.health} Урон:${e.damage}</div></div>
+                    </div>
+                    <div class="item-actions"><button onclick="selectEnemy('${id}')">✏️</button><button class="delete-btn" onclick="deleteEnemy('${id}')">🗑️</button></div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectEnemy(id) {
+            currentEnemyId = id;
+            let e = config.enemies[id];
+            document.getElementById('enemy-id').value = id;
+            document.getElementById('enemy-name').value = e.name;
+            document.getElementById('enemy-health').value = e.health;
+            document.getElementById('enemy-damage').value = e.damage;
+            document.getElementById('enemy-symbol').value = e.symbol;
+            document.getElementById('enemy-color').value = e.color;
+            document.getElementById('enemy-xp').value = e.xp;
+            document.getElementById('enemy-rarity').value = e.rarity;
+            document.getElementById('enemy-preview-symbol').textContent = e.symbol;
+            document.getElementById('enemy-preview-symbol').style.color = e.color;
+            document.getElementById('enemy-preview-name').textContent = e.name;
+            document.getElementById('enemy-editor').style.display = 'block';
+            renderEnemiesList();
+        }
+
+        function addNewEnemy() {
+            let id = 'enemy_' + Date.now();
+            config.enemies[id] = { name: "Новый враг", health: 50, damage: 8, symbol: "👾", color: "#ff4444", xp: 50, rarity: 3 };
+            selectEnemy(id);
+            autoSave();
+        }
+
+        function saveEnemy() {
+            let id = document.getElementById('enemy-id').value;
+            config.enemies[id] = {
+                name: document.getElementById('enemy-name').value,
+                health: parseInt(document.getElementById('enemy-health').value),
+                damage: parseInt(document.getElementById('enemy-damage').value),
+                symbol: document.getElementById('enemy-symbol').value,
+                color: document.getElementById('enemy-color').value,
+                xp: parseInt(document.getElementById('enemy-xp').value),
+                rarity: parseInt(document.getElementById('enemy-rarity').value)
+            };
+            cancelEnemyEdit();
+            autoSave();
+        }
+
+        function deleteEnemy(id) {
+            if (confirm(`Удалить врага ${config.enemies[id].name}?`)) {
+                delete config.enemies[id];
+                if (currentEnemyId === id) cancelEnemyEdit();
+                renderEnemiesList();
+                autoSave();
+            }
+        }
+
+        function deleteCurrentEnemy() { deleteEnemy(document.getElementById('enemy-id').value); }
+        function cancelEnemyEdit() { currentEnemyId = null; document.getElementById('enemy-editor').style.display = 'none'; renderEnemiesList(); }
+
+        // Оружие
+        function renderWeaponsList() {
+            let list = document.getElementById('weapons-list');
+            if (!list) return;
+            list.innerHTML = '';
+            Object.entries(config.weapons).forEach(([id, w]) => {
+                let card = document.createElement('div');
+                card.className = `item-card ${currentWeaponId === id ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="item-header" onclick="selectWeapon('${id}')">
+                        <div class="item-symbol" style="color:${w.color}">${w.symbol}</div>
+                        <div><div class="item-name">${w.name}</div><div style="font-size:12px;">Урон:${w.damage}</div></div>
+                    </div>
+                    <div class="item-actions"><button onclick="selectWeapon('${id}')">✏️</button>${id!='fist'?`<button class="delete-btn" onclick="deleteWeapon('${id}')">🗑️</button>`:''}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectWeapon(id) {
+            currentWeaponId = id;
+            let w = config.weapons[id];
+            document.getElementById('weapon-id').value = id;
+            document.getElementById('weapon-name').value = w.name;
+            document.getElementById('weapon-damage').value = w.damage;
+            document.getElementById('weapon-symbol').value = w.symbol;
+            document.getElementById('weapon-color').value = w.color;
+            document.getElementById('weapon-rarity').value = w.rarity;
+            document.getElementById('weapon-type').value = w.melee ? 'true' : 'false';
+            document.getElementById('weapon-range-group').style.display = w.melee ? 'none' : 'block';
+            if (!w.melee) document.getElementById('weapon-range').value = w.range || 5;
+            document.getElementById('weapon-preview-symbol').textContent = w.symbol;
+            document.getElementById('weapon-preview-symbol').style.color = w.color;
+            document.getElementById('weapon-preview-name').textContent = w.name;
+            document.getElementById('weapon-editor').style.display = 'block';
+            renderWeaponsList();
+        }
+
+        function addNewWeapon() {
+            let id = 'weapon_' + Date.now();
+            config.weapons[id] = { name: "Новое оружие", damage: 10, symbol: "⚔️", color: "#ff8a00", rarity: 3, melee: true };
+            selectWeapon(id);
+            autoSave();
+        }
+
+        function saveWeapon() {
+            let id = document.getElementById('weapon-id').value;
+            let isMelee = document.getElementById('weapon-type').value === 'true';
+            let weapon = {
+                name: document.getElementById('weapon-name').value,
+                damage: parseInt(document.getElementById('weapon-damage').value),
+                symbol: document.getElementById('weapon-symbol').value,
+                color: document.getElementById('weapon-color').value,
+                rarity: parseInt(document.getElementById('weapon-rarity').value),
+                melee: isMelee
+            };
+            if (!isMelee) weapon.range = parseInt(document.getElementById('weapon-range').value);
+            config.weapons[id] = weapon;
+            cancelWeaponEdit();
+            updateWeaponSelects();
+            autoSave();
+        }
+
+        function deleteWeapon(id) {
+            if (id === 'fist') { alert('Нельзя удалить базовое оружие!'); return; }
+            if (confirm(`Удалить оружие ${config.weapons[id].name}?`)) {
+                delete config.weapons[id];
+                if (currentWeaponId === id) cancelWeaponEdit();
+                renderWeaponsList();
+                updateWeaponSelects();
+                autoSave();
+            }
+        }
+
+        function deleteCurrentWeapon() { deleteWeapon(document.getElementById('weapon-id').value); }
+        function cancelWeaponEdit() { currentWeaponId = null; document.getElementById('weapon-editor').style.display = 'none'; renderWeaponsList(); }
+
+        // Предметы
+        function renderItemsList() {
+            let list = document.getElementById('items-list');
+            if (!list) return;
+            list.innerHTML = '';
+            Object.entries(config.items).forEach(([id, it]) => {
+                let card = document.createElement('div');
+                card.className = `item-card ${currentItemId === id ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="item-header" onclick="selectItem('${id}')">
+                        <div class="item-symbol" style="color:${it.color}">${it.symbol}</div>
+                        <div><div class="item-name">${it.name}</div><div style="font-size:12px;">${it.type} ${it.value}</div></div>
+                    </div>
+                    <div class="item-actions"><button onclick="selectItem('${id}')">✏️</button><button class="delete-btn" onclick="deleteItem('${id}')">🗑️</button></div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectItem(id) {
+            currentItemId = id;
+            let it = config.items[id];
+            document.getElementById('item-id').value = id;
+            document.getElementById('item-name').value = it.name;
+            document.getElementById('item-type').value = it.type;
+            document.getElementById('item-value').value = it.value;
+            document.getElementById('item-symbol').value = it.symbol;
+            document.getElementById('item-color').value = it.color;
+            document.getElementById('item-effect').value = it.effect;
+            document.getElementById('item-preview-symbol').textContent = it.symbol;
+            document.getElementById('item-preview-symbol').style.color = it.color;
+            document.getElementById('item-preview-name').textContent = it.name;
+            document.getElementById('item-editor').style.display = 'block';
+            renderItemsList();
+        }
+
+        function addNewItem() {
+            let id = 'item_' + Date.now();
+            config.items[id] = { name: "Новый предмет", type: "heal", value: 30, symbol: "🧪", color: "#ff4444", effect: "Эффект" };
+            selectItem(id);
+            autoSave();
+        }
+
+        function saveItem() {
+            let id = document.getElementById('item-id').value;
+            config.items[id] = {
+                name: document.getElementById('item-name').value,
+                type: document.getElementById('item-type').value,
+                value: parseInt(document.getElementById('item-value').value),
+                symbol: document.getElementById('item-symbol').value,
+                color: document.getElementById('item-color').value,
+                effect: document.getElementById('item-effect').value
+            };
+            cancelItemEdit();
+            autoSave();
+        }
+
+        function deleteItem(id) {
+            if (confirm(`Удалить предмет ${config.items[id].name}?`)) {
+                delete config.items[id];
+                if (currentItemId === id) cancelItemEdit();
+                renderItemsList();
+                autoSave();
+            }
+        }
+
+        function deleteCurrentItem() { deleteItem(document.getElementById('item-id').value); }
+        function cancelItemEdit() { currentItemId = null; document.getElementById('item-editor').style.display = 'none'; renderItemsList(); }
+
+        // Скины
+        function renderSkinsList() {
+            const list = document.getElementById('skins-list');
+            if (!list) return;
+            
+            if (!config.skins) config.skins = {};
+            
+            list.innerHTML = '';
+            Object.entries(config.skins).forEach(([id, skin]) => {
+                const card = document.createElement('div');
+                card.className = `item-card ${currentSkinId === id ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="item-header" onclick="selectSkin('${id}')">
+                        <div class="item-symbol" style="color: ${skin.color}">${skin.symbol}</div>
+                        <div>
+                            <div class="item-name">${skin.name}</div>
+                            <div style="font-size: 12px;">Цена: ${skin.price}🪙</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button onclick="selectSkin('${id}')">✏️</button>
+                        ${id !== 'default' ? `<button class="delete-btn" onclick="deleteSkin('${id}')">🗑️</button>` : ''}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectSkin(id) {
+            currentSkinId = id;
+            let skin = config.skins[id];
+            document.getElementById('skin-id').value = id;
+            document.getElementById('skin-id-input').value = id;
+            document.getElementById('skin-name').value = skin.name;
+            document.getElementById('skin-symbol').value = skin.symbol;
+            document.getElementById('skin-color').value = skin.color;
+            document.getElementById('skin-price').value = skin.price;
+            document.getElementById('skin-description').value = skin.description || '';
+            document.getElementById('skin-owned').value = skin.owned ? 'true' : 'false';
+            document.getElementById('skin-preview-symbol').textContent = skin.symbol;
+            document.getElementById('skin-preview-symbol').style.color = skin.color;
+            document.getElementById('skin-editor').style.display = 'block';
+            renderSkinsList();
+        }
+
+        function addNewSkin() {
+            if (!config.skins) config.skins = {};
+            let newId = 'skin_' + Date.now();
+            config.skins[newId] = { 
+                name: "Новый скин", 
+                symbol: "👤", 
+                color: "#4a8aff", 
+                price: 100, 
+                description: "Новый скин", 
+                owned: false 
+            };
+            selectSkin(newId);
+            autoSave();
+        }
+
+        function saveSkin() {
+            let oldId = document.getElementById('skin-id').value;
+            let newId = document.getElementById('skin-id-input').value.trim();
+            if (!newId) { alert('ID не может быть пустым!'); return; }
+            if (!/^[a-zA-Z0-9_]+$/.test(newId)) { alert('ID только латинские буквы, цифры и _'); return; }
+            
+            let skinData = {
+                name: document.getElementById('skin-name').value,
+                symbol: document.getElementById('skin-symbol').value,
+                color: document.getElementById('skin-color').value,
+                price: parseInt(document.getElementById('skin-price').value),
+                description: document.getElementById('skin-description').value,
+                owned: document.getElementById('skin-owned').value === 'true'
+            };
+            
+            if (oldId !== newId) {
+                delete config.skins[oldId];
+                config.skins[newId] = skinData;
+            } else {
+                config.skins[oldId] = skinData;
+            }
+            
+            cancelSkinEdit();
+            if (typeof updateShopSkinSelect === 'function') updateShopSkinSelect();
+            autoSave();
+        }
+
+        function deleteSkin(id) {
+            if (id === 'default') { alert('Нельзя удалить стандартный скин!'); return; }
+            if (confirm(`Удалить скин ${config.skins[id].name}?`)) {
+                delete config.skins[id];
+                if (currentSkinId === id) cancelSkinEdit();
+                renderSkinsList();
+                if (typeof updateShopSkinSelect === 'function') updateShopSkinSelect();
+                autoSave();
+            }
+        }
+
+        function deleteCurrentSkin() { deleteSkin(document.getElementById('skin-id').value); }
+        function cancelSkinEdit() { currentSkinId = null; document.getElementById('skin-editor').style.display = 'none'; renderSkinsList(); }
+
+        // Магазин
+        function renderShopItemsList() {
+            const list = document.getElementById('shop-items-list');
+            if (!list) return;
+            
+            if (!config.shop) config.shop = {};
+            
+            list.innerHTML = '';
+            Object.entries(config.shop).forEach(([id, item]) => {
+                const card = document.createElement('div');
+                card.className = `item-card ${currentShopItemId === id ? 'selected' : ''}`;
+                let typeText = { consumable: 'Расходуемый', permanent: 'Постоянный', weapon: 'Оружие', skin: 'Скин' }[item.type] || item.type;
+                card.innerHTML = `
+                    <div class="item-header" onclick="selectShopItem('${id}')">
+                        <div class="item-symbol" style="color: ${item.color || '#ffd700'}">${item.icon || '🛒'}</div>
+                        <div>
+                            <div class="item-name">${item.name}</div>
+                            <div style="font-size: 12px;">${typeText} | ${item.price}🪙</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button onclick="selectShopItem('${id}')">✏️</button>
+                        <button class="delete-btn" onclick="deleteShopItem('${id}')">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function selectShopItem(id) {
+            currentShopItemId = id;
+            let item = config.shop[id];
+            document.getElementById('shop-item-id').value = id;
+            document.getElementById('shop-item-name').value = item.name;
+            document.getElementById('shop-item-type').value = item.type;
+            document.getElementById('shop-item-effect').value = item.effect || '';
+            document.getElementById('shop-item-symbol').value = item.icon || '🛒';
+            document.getElementById('shop-item-color').value = item.color || '#ffd700';
+            document.getElementById('shop-item-price').value = item.price;
+            
+            document.getElementById('shop-item-preview-symbol').textContent = item.icon || '🛒';
+            document.getElementById('shop-item-preview-symbol').style.color = item.color || '#ffd700';
+            document.getElementById('shop-item-preview-name').textContent = item.name;
+            
+            onShopItemTypeChange();
+            
+            if (item.type === 'weapon' && item.weaponId) {
+                updateShopWeaponSelect();
+                let sel = document.getElementById('shop-item-weapon-select');
+                if (sel) sel.value = item.weaponId;
+            }
+            if (item.type === 'skin' && item.skinId) {
+                updateShopSkinSelect();
+                let sel = document.getElementById('shop-item-skin-select');
+                if (sel) sel.value = item.skinId;
+            }
+            
+            document.getElementById('shop-item-editor').style.display = 'block';
+            renderShopItemsList();
+        }
+
+        function addNewShopItem() {
+            if (!config.shop) config.shop = {};
+            let newId = 'shop_' + Date.now();
+            config.shop[newId] = { 
+                name: "Новый товар", 
+                effect: "Описание", 
+                price: 100, 
+                icon: "🛒", 
+                color: "#ffd700", 
+                type: "consumable" 
+            };
+            selectShopItem(newId);
+            autoSave();
+        }
+
+        function saveShopItem() {
+            let id = document.getElementById('shop-item-id').value;
+            let type = document.getElementById('shop-item-type').value;
+            
+            let itemData = {
+                name: document.getElementById('shop-item-name').value,
+                effect: document.getElementById('shop-item-effect').value,
+                price: parseInt(document.getElementById('shop-item-price').value),
+                icon: document.getElementById('shop-item-symbol').value,
+                color: document.getElementById('shop-item-color').value,
+                type: type
+            };
+            
+            if (type === 'weapon') {
+                let weaponId = document.getElementById('shop-item-weapon-select').value;
+                itemData.weaponId = weaponId;
+                let weapon = config.weapons[weaponId];
+                if (weapon) { itemData.icon = weapon.symbol; itemData.color = weapon.color; }
+            } else if (type === 'skin') {
+                let skinId = document.getElementById('shop-item-skin-select').value;
+                itemData.skinId = skinId;
+                let skin = config.skins[skinId];
+                if (skin) { itemData.icon = skin.symbol; itemData.color = skin.color; }
+            }
+            
+            config.shop[id] = itemData;
+            cancelShopItemEdit();
+            autoSave();
+        }
+
+        function deleteShopItem(id) {
+            if (confirm(`Удалить товар ${config.shop[id].name}?`)) {
+                delete config.shop[id];
+                if (currentShopItemId === id) cancelShopItemEdit();
+                renderShopItemsList();
+                autoSave();
+            }
+        }
+
+        function deleteCurrentShopItem() { deleteShopItem(document.getElementById('shop-item-id').value); }
+        function cancelShopItemEdit() { currentShopItemId = null; document.getElementById('shop-item-editor').style.display = 'none'; renderShopItemsList(); }
+
+        function onShopItemTypeChange() {
+            let type = document.getElementById('shop-item-type').value;
+            let weaponDiv = document.getElementById('shop-item-ref-select');
+            let skinDiv = document.getElementById('shop-item-skin-select');
+            let custom = document.getElementById('shop-item-custom-fields');
+            
+            if (!weaponDiv || !skinDiv || !custom) return;
+            weaponDiv.style.display = 'none';
+            skinDiv.style.display = 'none';
+            custom.style.display = 'block';
+            
+            if (type === 'weapon') { weaponDiv.style.display = 'block'; updateShopWeaponSelect(); }
+            else if (type === 'skin') { skinDiv.style.display = 'block'; updateShopSkinSelect(); }
+        }
+
+        function updateShopWeaponSelect() {
+            let select = document.getElementById('shop-item-weapon-select');
+            if (!select) return;
+            select.innerHTML = '';
+            Object.entries(config.weapons).forEach(([id, w]) => {
+                let opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${w.name} (${w.damage}⚔️)`;
+                select.appendChild(opt);
+            });
+        }
+
+        function updateShopSkinSelect() {
+            let select = document.getElementById('shop-item-skin-select');
+            if (!select) return;
+            select.innerHTML = '';
+            Object.entries(config.skins).forEach(([id, s]) => {
+                let opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${s.name} (${s.price}🪙)`;
+                select.appendChild(opt);
+            });
+        }
+
+        // Функции экспорта
+        function saveToGameFile() {
+            const fullConfig = collectCurrentConfig();
+            const jsonStr = JSON.stringify(fullConfig, null, 2);
+            
+            const blob = new Blob([jsonStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'maze_config.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAutoSaveIndicator('✅ Файл maze_config.json сохранен!');
+        }
+
+        function exportToJSON() {
+            const fullConfig = collectCurrentConfig();
+            const jsonStr = JSON.stringify(fullConfig, null, 2);
+            
+            document.getElementById('json-output').textContent = jsonStr;
+            
+            const blob = new Blob([jsonStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'maze_config_backup.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromJSON() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const importedConfig = JSON.parse(e.target.result);
+                        config = {
+                            global: importedConfig.global || defaultConfig.global,
+                            player: importedConfig.player || defaultConfig.player,
+                            enemies: importedConfig.enemies || defaultConfig.enemies,
+                            weapons: importedConfig.weapons || defaultConfig.weapons,
+                            items: importedConfig.items || defaultConfig.items,
+                            skins: importedConfig.skins || defaultConfig.skins,
+                            shop: importedConfig.shop || defaultConfig.shop,
+                            balance: importedConfig.balance || defaultConfig.balance
+                        };
+                        updateAllInputs();
+                        renderEnemiesList();
+                        renderWeaponsList();
+                        renderItemsList();
+                        renderSkinsList();
+                        renderShopItemsList();
+                        updateWeaponSelects();
+                        autoSave();
+                        showAutoSaveIndicator('✅ Конфигурация загружена!');
+                    } catch (err) { alert('Ошибка: ' + err); }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(JSON.stringify(collectCurrentConfig(), null, 2)).then(() => {
+                showAutoSaveIndicator('📋 JSON скопирован!');
+            });
+        }
+
+        function generateGameCode() {
+            let c = collectCurrentConfig();
+            let code = `// КОНФИГУРАЦИЯ\nconst enemies = ${JSON.stringify(c.enemies, null, 2)};\nconst weapons = ${JSON.stringify(c.weapons, null, 2)};\nconst items = ${JSON.stringify(c.items, null, 2)};\nconst heroSkins = ${JSON.stringify(c.skins, null, 2)};\nconst shopItems = ${JSON.stringify(c.shop, null, 2)};`;
+            document.getElementById('json-output').textContent = code;
+        }
+    </script>
+</body>
+</html>
