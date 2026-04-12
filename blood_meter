@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>&#1062;&#1080;&#1092;&#1088;&#1086;&#1074;&#1086;&#1081; &#1074;&#1074;&#1086;&#1076; &#8212; &#1082;&#1072;&#1083;&#1100;&#1082;&#1091;&#1083;&#1103;&#1090;&#1086;&#1088;</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      padding: 1.5rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(2px);
+      border-radius: 2.5rem;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 500px;
+      padding: 2rem 1.8rem 2.2rem;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: #1a2c3e;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    h1::before {
+      content: "🔢";
+      font-size: 1.8rem;
+    }
+
+    .sub {
+      color: #4a627a;
+      font-size: 0.85rem;
+      margin-bottom: 1.8rem;
+      border-left: 3px solid #3b82f6;
+      padding-left: 0.7rem;
+      font-weight: 450;
+    }
+
+    .input-group {
+      margin-bottom: 2rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.2px;
+    }
+
+    .number-input {
+      width: 100%;
+      font-size: 1.6rem;
+      padding: 0.9rem 1.2rem;
+      border-radius: 1.8rem;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      font-family: 'SF Mono', 'JetBrains Mono', monospace;
+      font-weight: 500;
+      color: #0f172a;
+      transition: all 0.2s;
+      outline: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+      text-align: left;
+    }
+
+    .number-input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+      background-color: #fefefe;
+    }
+
+    .number-input::-webkit-outer-spin-button,
+    .number-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .number-input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    .result-area {
+      background: #f1f5f9;
+      border-radius: 1.8rem;
+      padding: 1.2rem 1.5rem;
+      margin-top: 0.5rem;
+      border: 1px solid #e2e8f0;
+      transition: background 0.2s;
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #0f172a;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    .rule-table {
+      margin-top: 1.2rem;
+      background: #ffffffcc;
+      border-radius: 1.2rem;
+      padding: 0.8rem 1rem;
+      font-size: 0.7rem;
+      color: #334155;
+      backdrop-filter: blur(4px);
+    }
+
+    .rule-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .rule-table td {
+      padding: 0.25rem 0.3rem;
+    }
+
+    .rule-table td:first-child {
+      font-family: monospace;
+      font-weight: 500;
+    }
+
+    .rule-table tr:not(:last-child) td {
+      border-bottom: 1px dashed #cbd5e1;
+    }
+
+    .info-note {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1.2rem;
+      font-size: 0.7rem;
+      color: #5b6e8c;
+      background: #eef2ff;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      width: fit-content;
+    }
+
+    .info-note::before {
+      content: "📱";
+      font-size: 1rem;
+    }
+
+    @media (max-width: 480px) {
+      .card {
+        padding: 1.5rem 1.2rem;
+      }
+      .number-input {
+        font-size: 1.4rem;
+        padding: 0.8rem 1rem;
+      }
+      .result-value {
+        font-size: 1.8rem;
+      }
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.4rem 0.8rem;
+      margin-top: 0.8rem;
+      color: #3b82f6;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 2rem;
+      transition: background 0.1s;
+    }
+
+    .clear-btn:active {
+      background: #e2e8f0;
+    }
+
+    footer {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.65rem;
+      color: #6c86a3;
+    }
+
+    .badge {
+      background: #d9f0ff;
+      border-radius: 1rem;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <!-- <h1>&#1062;&#1080;&#1092;&#1088;&#1086;&#1074;&#1086;&#1081; &#1074;&#1074;&#1086;&#1076;</h1> -->
+  <h1>РАСЧЕТ ДОЗЫ ИНСУЛИНА</h1>
+  <!-- <div class="sub">&#1055;&#1088;&#1072;&#1074;&#1080;&#1083;&#1086; &#1087;&#1077;&#1088;&#1077;&#1089;&#1095;&#1077;&#1090;&#1072; &#8212; &#1085;&#1080;&#1078;&#1077;</div> -->
+
+  <div class="input-group">
+    <!-- <label for="numericInput">&#128221; &#1042;&#1074;&#1077;&#1076;&#1080;&#1090;&#1077; &#1095;&#1080;&#1089;&#1083;&#1086; X</label> -->
+	<label for="numericInput">&#128221; Введите показания глюкометра</label>
+    <input type="number" id="numericInput" class="number-input" 
+           inputmode="numeric" pattern="\d*" 
+           placeholder="&#1053;&#1072;&#1087;&#1088;&#1080;&#1084;&#1077;&#1088;: 5.5"
+           autocomplete="off"
+           enterkeyhint="done"
+           step="any">
+  </div>
+
+  <div class="result-area">
+    <!-- <div class="result-label">&#128202; &#1056;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090; (&#1074;&#1099;&#1074;&#1086;&#1076;)</div> -->
+	<div class="result-label">&#128202; требуемая доза инсулина</div>
+    <div class="result-value" id="resultDisplay">&#8212;</div>
+    <div style="font-size: 0.7rem; margin-top: 0.5rem; color: #3b6e9e;">
+      <!-- <span class="badge">&#1055;&#1088;&#1072;&#1074;&#1080;&#1083;&#1086;</span> -->
+    </div>
+  </div>
+
+  <!-- Таблица правил преобразования -->
+  <!-- <div class="rule-table">
+    <table>
+      <tr><td><strong>X &lt; 10.0</strong></td><td>&rarr;</td><td><strong>2.5</strong></td></tr>
+      <tr><td><strong>10.0 &lt; X &lt; 15.0</strong></td><td>&rarr;</td><td><strong>3.0</strong></td></tr>
+      <tr><td><strong>15.0 &lt; X &lt; 20.0</strong></td><td>&rarr;</td><td><strong>3.5</strong></td></tr>
+      <tr><td><strong>20.0 &lt; X</strong></td><td>&rarr;</td><td><strong>4.0</strong></td></tr>
+    </table>
+    <div style="font-size: 0.65rem; margin-top: 0.5rem; color: #556b82;">* &#1055;&#1088;&#1080; X = 10.0, 15.0, 20.0 &#8212; &#1074;&#1099;&#1074;&#1086;&#1076;&#1080;&#1090;&#1089;&#1103; &#1087;&#1088;&#1077;&#1076;&#1099;&#1076;&#1091;&#1097;&#1080;&#1081; &#1076;&#1080;&#1072;&#1087;&#1072;&#1079;&#1086;&#1085; (2.5, 3.0, 3.5)</div>
+  </div> -->
+
+  <button class="clear-btn" id="clearButton" aria-label="&#1054;&#1095;&#1080;&#1089;&#1090;&#1080;&#1090;&#1100; &#1087;&#1086;&#1083;&#1077;">
+    &#10006;&#65039; &#1054;&#1095;&#1080;&#1089;&#1090;&#1080;&#1090;&#1100;
+  </button>
+
+  <!-- <div class="info-note">
+    &#1055;&#1088;&#1080; &#1092;&#1086;&#1082;&#1091;&#1089;&#1077; &#1085;&#1072; &#1087;&#1086;&#1083;&#1077; &#8212; &#1094;&#1080;&#1092;&#1088;&#1086;&#1074;&#1072;&#1103; &#1082;&#1083;&#1072;&#1074;&#1080;&#1072;&#1090;&#1091;&#1088;&#1072;
+  </div>
+  <footer>&#1056;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090; &#1086;&#1073;&#1085;&#1086;&#1074;&#1083;&#1103;&#1077;&#1090;&#1089;&#1103; &#1087;&#1088;&#1080; &#1074;&#1074;&#1086;&#1076;&#1077;</footer> -->
+</div>
+
+<script>
+  const inputElement = document.getElementById('numericInput');
+  const resultSpan = document.getElementById('resultDisplay');
+
+  /**
+   * Преобразует число X по заданным правилам
+   * @param {number} x - введённое число
+   * @returns {number} результат: 2.5, 3.0, 3.5 или 4.0
+   */
+  function calculateResult(x) {
+    // X < 10.0  -> 2.5
+    if (x < 10.0) {
+      return 2.5;
+    }
+    // 10.0 < X < 15.0 -> 3.0
+    if (x > 10.0 && x < 15.0) {
+      return 3.0;
+    }
+    // 15.0 < X < 20.0 -> 3.5
+    if (x > 15.0 && x < 20.0) {
+      return 3.5;
+    }
+    // 20.0 < X -> 4.0
+    if (x > 20.0) {
+      return 4.0;
+    }
+    // Пограничные случаи: X === 10.0, X === 15.0, X === 20.0
+    // а также X === 10.0 (не подходит под >10.0, поэтому попадает сюда)
+    // По логике "строго больше" — на границах возвращаем предыдущий результат
+    if (x === 10.0) {
+      return 2.5;   // как для X < 10.0
+    }
+    if (x === 15.0) {
+      return 3.0;   // как для 10.0 < X < 15.0? нет, но по смыслу граница — оставляем 3.0
+    }
+    if (x === 20.0) {
+      return 3.5;   // как для 15.0 < X < 20.0
+    }
+    // Если X находится в интервале [10.0, 10.0] или других выпадающих — fallback
+    // Например X = 10.0 обработано выше. Для X между 15.0 и 20.0 включительно?
+    // X = 15.0 -> 3.0, X = 20.0 -> 3.5
+    // Также для X меньше 10.0 уже обработано.
+    // Дополнительно: X = 10.0001 -> попадает во второй if ( >10.0 и <15.0 ) -> 3.0
+    // Остался случай X === 15.0 и X === 20.0 обработаны явно.
+    // Для интервала [10.0, 10.0] (равно) -> 2.5
+    // Для X между 15.0 и 20.0 исключительно (>15.0 и <20.0) -> 3.5 уже есть
+    // Для X === 15.0 -> 3.0
+    // Для X === 20.0 -> 3.5
+    // Если X находится между 10.0 и 10.0? не бывает.
+    // Всё покрыто.
+    return 4.0; // если вдруг что-то не охвачено (но не должно)
+  }
+
+  function formatOutput(value) {
+    // Убираем лишние нули: 2.5 -> "2.5", 3.0 -> "3.0", 4.0 -> "4.0"
+    if (Number.isInteger(value)) {
+      return value.toFixed(1); // 3.0, 4.0
+    }
+    return value.toString(); // 2.5
+  }
+
+  function updateResult() {
+    let rawValue = inputElement.value;
+    
+    // Пустое поле
+    if (rawValue === null || rawValue === undefined || rawValue === '') {
+      resultSpan.textContent = '⏺ (' + String.fromCharCode(1085,1077,32,1079,1072,1076,1072,1085,1086) + ')';
+      resultSpan.style.opacity = '0.8';
+      return;
+    }
+    
+    let trimmed = rawValue.trim();
+    if (trimmed === '') {
+      resultSpan.textContent = '⏺ (' + String.fromCharCode(1087,1091,1089,1090,1086) + ')';
+      return;
+    }
+    
+    const numberValue = parseFloat(trimmed);
+    
+    // Проверка на валидное число
+    if (isNaN(numberValue)) {
+      resultSpan.textContent = '❌ ' + String.fromCharCode(1053,1077,1082,1086,1088,1088,1077,1082,1090,1085,1086) + ': "' + trimmed + '"';
+      resultSpan.style.color = '#b91c1c';
+      return;
+    }
+    
+    // Вычисляем результат по правилам
+    let result = calculateResult(numberValue);
+    let displayResult = formatOutput(result);
+    
+    // Дополнительно показываем исходное X для ясности (опционально, но улучшает UX)
+    // Можно показать дополнительную информацию, но не перегружая
+    resultSpan.style.color = '#0f172a';
+    resultSpan.style.opacity = '1';
+    
+    // Просто выводим результат
+    resultSpan.textContent = displayResult;
+    
+    // Небольшой визуальный эффект при изменении (мигание)
+    resultSpan.style.transform = 'scale(1.02)';
+    setTimeout(() => {
+      if (resultSpan) resultSpan.style.transform = '';
+    }, 120);
+  }
+  
+  function clearInput() {
+    inputElement.value = '';
+    updateResult();
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(12);
+    }
+  }
+  
+  // Основные события
+  inputElement.addEventListener('input', updateResult);
+  inputElement.addEventListener('change', updateResult);
+  inputElement.addEventListener('blur', updateResult);
+  
+  const clearBtn = document.getElementById('clearButton');
+  clearBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearInput();
+  });
+  
+  // Инициализация
+  updateResult();
+  
+  // Анимация фокуса
+  inputElement.addEventListener('focus', () => {
+    document.querySelector('.card').style.boxShadow = '0 28px 48px -12px rgba(0, 0, 0, 0.35)';
+  });
+  inputElement.addEventListener('blur', () => {
+    document.querySelector('.card').style.boxShadow = '0 25px 45px -12px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.05)';
+  });
+  
+  // Для мобильных устройств — цифровая клавиатура
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) {
+    const note = document.querySelector('.info-note');
+    if (note) {
+      note.style.background = "#e9ecef";
+      note.innerHTML = '💻 ' + String.fromCharCode(1044,1077,1089,1082,1090,1086,1087) + ': ' + String.fromCharCode(1080,1089,1087,1086,1083,1100,1079,1091,1081,1090,1077,32,1094,1080,1092,1088,1086,1074,1091,1102,32,1082,1083,1072,1074,1080,1072,1090,1091,1088,1091);
+    }
+  } else {
+    inputElement.setAttribute('inputmode', 'numeric');
+    inputElement.setAttribute('pattern', '\\d*');
+  }
+  
+  inputElement.addEventListener('paste', () => {
+    setTimeout(updateResult, 10);
+  });
+  
+  // Тестовые примеры для консоли (разработка)
+  console.log('Логика преобразования:');
+  console.log('X=5 ->', calculateResult(5));    // 2.5
+  console.log('X=10 ->', calculateResult(10));   // 2.5
+  console.log('X=12.3 ->', calculateResult(12.3)); // 3.0
+  console.log('X=15 ->', calculateResult(15));   // 3.0
+  console.log('X=17.8 ->', calculateResult(17.8)); // 3.5
+  console.log('X=20 ->', calculateResult(20));   // 3.5
+  console.log('X=25 ->', calculateResult(25));   // 4.0
+</script>
+</body>
+</html>
