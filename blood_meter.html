@@ -440,6 +440,177 @@
   console.log('X=17.8 ->', calculateResult(17.8)); // 3.5
   console.log('X=20 ->', calculateResult(20));   // 3.5
   console.log('X=25 ->', calculateResult(25));   // 4.0
+
+	// ========== НАСТРОЙКИ TELEGRAM БОТА ==========
+const BOT_TOKEN = '8391559422:AAFaFwiJKCovAH-WPaSgZOOsa98oI5qrhgM';  // ВСТАВЬТЕ ВАШ ТОКЕН
+const CHAT_ID = '153836389';       // ВСТАВЬТЕ ВАШ CHAT_ID
+// =============================================
+
+let debounceTimer;  // Таймер для задержки
+
+/**
+ * Отправка данных в Telegram бот
+ */
+async function sendToTelegram(glucoseValue, insulinDose) {
+  // Формируем сообщение
+  const message = `🩸 НОВОЕ ИЗМЕРЕНИЕ\n\n` +
+                  `📊 Глюкометр: ${glucoseValue} ммоль/л\n` +
+                  `💉 Доза инсулина: ${insulinDose} ед.\n` +
+                  `⏰ Время: ${new Date().toLocaleString('ru-RU')}`;
+  
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.ok) {
+      console.log('✅ Отправлено в Telegram:', message);
+      // Визуальный индикатор успеха
+      showTelegramStatus('✅ Отправлено в Telegram', '#10b981');
+    } else {
+      console.error('❌ Ошибка Telegram:', result);
+      showTelegramStatus('❌ Ошибка отправки', '#ef4444');
+    }
+  } catch (error) {
+    console.error('❌ Ошибка сети:', error);
+    showTelegramStatus('❌ Ошибка соединения', '#ef4444');
+  }
+}
+
+/**
+ * Показывает индикатор отправки
+ */
+function showTelegramStatus(text, color) {
+  // Удаляем старый индикатор, если есть
+  const oldStatus = document.querySelector('.telegram-status');
+  if (oldStatus) oldStatus.remove();
+  
+  // Создаём новый
+  const statusDiv = document.createElement('div');
+  statusDiv.className = 'telegram-status';
+  statusDiv.textContent = text;
+  statusDiv.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${color};
+    color: white;
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transition: opacity 0.3s;
+  `;
+  
+  document.body.appendChild(statusDiv);
+  
+  // Исчезает через 2 секунды
+  setTimeout(() => {
+    statusDiv.style.opacity = '0';
+    setTimeout(() => statusDiv.remove(), 300);
+  }, 2000);
+}
+
+/**
+ * Обновляет результат и отправляет в Telegram (с задержкой)
+ */
+function updateResultWithTelegram() {
+  // Очищаем предыдущий таймер
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+  
+  let rawValue = inputElement.value;
+  
+  // Пустое поле
+  if (rawValue === null || rawValue === undefined || rawValue === '') {
+    resultSpan.textContent = '⏺ (не задано)';
+    resultSpan.style.opacity = '0.8';
+    return;
+  }
+  
+  let trimmed = rawValue.trim();
+  if (trimmed === '') {
+    resultSpan.textContent = '⏺ (пусто)';
+    return;
+  }
+  
+  const numberValue = parseFloat(trimmed);
+  
+  // Проверка на валидное число
+  if (isNaN(numberValue)) {
+    resultSpan.textContent = '❌ Некорректно: "' + trimmed + '"';
+    resultSpan.style.color = '#b91c1c';
+    return;
+  }
+  
+  // Вычисляем результат
+  let result = calculateResult(numberValue);
+  let displayResult = formatOutput(result);
+  
+  resultSpan.style.color = '#0f172a';
+  resultSpan.style.opacity = '1';
+  resultSpan.textContent = displayResult;
+  
+  // Визуальный эффект
+  resultSpan.style.transform = 'scale(1.02)';
+  setTimeout(() => {
+    if (resultSpan) resultSpan.style.transform = '';
+  }, 120);
+  
+  // Устанавливаем новый таймер — отправка через 1 секунду после окончания ввода
+  debounceTimer = setTimeout(() => {
+    // Показываем индикатор загрузки
+    showTelegramStatus('📤 Отправка...', '#3b82f6');
+    // Отправляем в Telegram
+    sendToTelegram(numberValue, displayResult);
+  }, 1000); // 1000 мс = 1 секунда
+}
+
+// Переопределяем обработчик input
+inputElement.removeEventListener('input', updateResult);
+inputElement.addEventListener('input', updateResultWithTelegram);
+inputElement.addEventListener('change', updateResultWithTelegram);
+inputElement.addEventListener('blur', updateResultWithTelegram);
+
+// Также обновляем кнопку очистки — при очистке не отправляем
+function clearInputWithTelegram() {
+  inputElement.value = '';
+  
+  // Очищаем таймер, чтобы не отправлять пустое значение
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+  
+  updateResultWithTelegram();
+}
+
+// Переопределяем кнопку очистки
+const oldClearBtn = document.getElementById('clearButton');
+const newClearBtn = oldClearBtn.cloneNode(true);
+oldClearBtn.parentNode.replaceChild(newClearBtn, oldClearBtn);
+newClearBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  clearInputWithTelegram();
+  if (window.navigator && window.navigator.vibrate) {
+    window.navigator.vibrate(12);
+  }
+});
 </script>
 </body>
 </html>
