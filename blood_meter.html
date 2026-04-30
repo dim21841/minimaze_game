@@ -46,7 +46,7 @@
     }
 
     h1::before {
-      content: "🔢";
+      content: "💉";
       font-size: 1.8rem;
     }
 
@@ -191,24 +191,46 @@
       }
     }
 
-    .clear-btn {
+    .button-group {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .clear-btn, .send-btn {
       background: none;
       border: none;
       font-size: 1rem;
       cursor: pointer;
-      padding: 0.4rem 0.8rem;
-      margin-top: 0.8rem;
-      color: #3b82f6;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
       font-weight: 500;
       display: inline-flex;
       align-items: center;
-      gap: 0.3rem;
-      border-radius: 2rem;
-      transition: background 0.1s;
+      gap: 0.4rem;
+      transition: all 0.15s;
+    }
+
+    .clear-btn {
+      color: #3b82f6;
+      background: #eff6ff;
     }
 
     .clear-btn:active {
-      background: #e2e8f0;
+      background: #dbeafe;
+      transform: scale(0.97);
+    }
+
+    .send-btn {
+      color: white;
+      background: #10b981;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+    }
+
+    .send-btn:active {
+      background: #059669;
+      transform: scale(0.97);
     }
 
     footer {
@@ -226,62 +248,89 @@
       font-weight: 500;
       display: inline-block;
     }
+
+    .telegram-status {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
   </style>
 </head>
 <body>
 
 <div class="card">
-<div style="display: flex; justify-content: center; margin: 20px 0;">
-  <img src="IMG_20260227_201551.jpg" alt="Описание картинки" width="240" height="320" style="object-fit: cover;">
-</div>
-  <!-- <h1>&#1062;&#1080;&#1092;&#1088;&#1086;&#1074;&#1086;&#1081; &#1074;&#1074;&#1086;&#1076;</h1> -->
+  <div style="display: flex; justify-content: center; margin: 20px 0;">
+    <img src="IMG_20260227_201551.jpg" alt="Описание картинки" width="240" height="320" style="object-fit: cover; border-radius: 24px;">
+  </div>
+  
   <h1>РАСЧЕТ ДОЗЫ ИНСУЛИНА</h1>
-  <!-- <div class="sub">&#1055;&#1088;&#1072;&#1074;&#1080;&#1083;&#1086; &#1087;&#1077;&#1088;&#1077;&#1089;&#1095;&#1077;&#1090;&#1072; &#8212; &#1085;&#1080;&#1078;&#1077;</div> -->
 
   <div class="input-group">
-    <!-- <label for="numericInput">&#128221; &#1042;&#1074;&#1077;&#1076;&#1080;&#1090;&#1077; &#1095;&#1080;&#1089;&#1083;&#1086; X</label> -->
-	<label for="numericInput">&#128221; Введите показания глюкометра</label>
+    <label for="numericInput">📝 Введите показания глюкометра</label>
     <input type="number" id="numericInput" class="number-input" 
            inputmode="numeric" pattern="\d*" 
-           placeholder="&#1053;&#1072;&#1087;&#1088;&#1080;&#1084;&#1077;&#1088;: 5.5"
+           placeholder="Например: 5.5"
            autocomplete="off"
            enterkeyhint="done"
            step="any">
   </div>
 
   <div class="result-area">
-    <!-- <div class="result-label">&#128202; &#1056;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090; (&#1074;&#1099;&#1074;&#1086;&#1076;)</div> -->
-	<div class="result-label">&#128202; требуемая доза инсулина</div>
-    <div class="result-value" id="resultDisplay">&#8212;</div>
+    <div class="result-label">💉 требуемая доза инсулина</div>
+    <div class="result-value" id="resultDisplay">—</div>
     <div style="font-size: 0.7rem; margin-top: 0.5rem; color: #3b6e9e;">
-      <!-- <span class="badge">&#1055;&#1088;&#1072;&#1074;&#1080;&#1083;&#1086;</span> -->
+      <!-- <span class="badge">Правило пересчета</span> -->
     </div>
   </div>
 
   <!-- Таблица правил преобразования -->
   <!-- <div class="rule-table">
     <table>
-      <tr><td><strong>X &lt; 10.0</strong></td><td>&rarr;</td><td><strong>2.5</strong></td></tr>
-      <tr><td><strong>10.0 &lt; X &lt; 15.0</strong></td><td>&rarr;</td><td><strong>3.0</strong></td></tr>
-      <tr><td><strong>15.0 &lt; X &lt; 20.0</strong></td><td>&rarr;</td><td><strong>3.5</strong></td></tr>
-      <tr><td><strong>20.0 &lt; X</strong></td><td>&rarr;</td><td><strong>4.0</strong></td></tr>
+      <tr><td><strong>X &lt; 10.0</strong><td>→<td><strong>2.5 ед</strong></tr>
+      <tr><td><strong>10.0 &lt; X &lt; 15.0</strong><td>→<td><strong>3.0 ед</strong></tr>
+      <tr><td><strong>15.0 &lt; X &lt; 20.0</strong><td>→<td><strong>3.5 ед</strong></tr>
+      <tr><td><strong>20.0 &lt; X</strong><td>→<td><strong>4.0 ед</strong></tr>
     </table>
-    <div style="font-size: 0.65rem; margin-top: 0.5rem; color: #556b82;">* &#1055;&#1088;&#1080; X = 10.0, 15.0, 20.0 &#8212; &#1074;&#1099;&#1074;&#1086;&#1076;&#1080;&#1090;&#1089;&#1103; &#1087;&#1088;&#1077;&#1076;&#1099;&#1076;&#1091;&#1097;&#1080;&#1081; &#1076;&#1080;&#1072;&#1087;&#1072;&#1079;&#1086;&#1085; (2.5, 3.0, 3.5)</div>
+    <div style="font-size: 0.65rem; margin-top: 0.5rem; color: #556b82;">* При X = 10.0, 15.0, 20.0 — выводится предыдущий диапазон (2.5, 3.0, 3.5)</div>
   </div> -->
 
-  <button class="clear-btn" id="clearButton" aria-label="&#1054;&#1095;&#1080;&#1089;&#1090;&#1080;&#1090;&#1100; &#1087;&#1086;&#1083;&#1077;">
-    &#10006;&#65039; &#1054;&#1095;&#1080;&#1089;&#1090;&#1080;&#1090;&#1100;
-  </button>
+  <!-- Группа кнопок: Очистить + Отправить -->
+  <div class="button-group">
+    <button class="clear-btn" id="clearButton">
+      ✖️ Очистить
+    </button>
+    <button class="send-btn" id="sendButton">
+      📤 Отправить в Telegram
+    </button>
+  </div>
 
   <!-- <div class="info-note">
-    &#1055;&#1088;&#1080; &#1092;&#1086;&#1082;&#1091;&#1089;&#1077; &#1085;&#1072; &#1087;&#1086;&#1083;&#1077; &#8212; &#1094;&#1080;&#1092;&#1088;&#1086;&#1074;&#1072;&#1103; &#1082;&#1083;&#1072;&#1074;&#1080;&#1072;&#1090;&#1091;&#1088;&#1072;
-  </div>
-  <footer>&#1056;&#1077;&#1079;&#1091;&#1083;&#1100;&#1090;&#1072;&#1090; &#1086;&#1073;&#1085;&#1086;&#1074;&#1083;&#1103;&#1077;&#1090;&#1089;&#1103; &#1087;&#1088;&#1080; &#1074;&#1074;&#1086;&#1076;&#1077;</footer> -->
+    При фокусе на поле — цифровая клавиатура
+  </div> -->
+  <!-- <footer>Результат обновляется при вводе | Отправка по кнопке</footer> -->
 </div>
 
 <script>
+  // ==================== НАСТРОЙКИ TELEGRAM БОТА ====================
+  // 🔴 ВСТАВЬТЕ ВАШИ ДАННЫЕ ЗДЕСЬ:
+  const BOT_TOKEN = '8391559422:AAFaFwiJKCovAH-WPaSgZOOsa98oI5qrhgM';    // Например: '1234567890:ABCdefGHIjklmNOPqrstUVWXYZ'
+  const CHAT_ID = '153836389';         // Например: '123456789'
+  // ================================================================
+  
   const inputElement = document.getElementById('numericInput');
   const resultSpan = document.getElementById('resultDisplay');
+  const clearBtn = document.getElementById('clearButton');
+  const sendBtn = document.getElementById('sendButton');
 
   /**
    * Преобразует число X по заданным правилам
@@ -289,122 +338,181 @@
    * @returns {number} результат: 2.5, 3.0, 3.5 или 4.0
    */
   function calculateResult(x) {
-    // X < 10.0  -> 2.5
-    if (x < 10.0) {
-      return 2.5;
-    }
-    // 10.0 < X < 15.0 -> 3.0
-    if (x > 10.0 && x < 15.0) {
-      return 3.0;
-    }
-    // 15.0 < X < 20.0 -> 3.5
-    if (x > 15.0 && x < 20.0) {
-      return 3.5;
-    }
-    // 20.0 < X -> 4.0
-    if (x > 20.0) {
-      return 4.0;
-    }
-    // Пограничные случаи: X === 10.0, X === 15.0, X === 20.0
-    // а также X === 10.0 (не подходит под >10.0, поэтому попадает сюда)
-    // По логике "строго больше" — на границах возвращаем предыдущий результат
-    if (x === 10.0) {
-      return 2.5;   // как для X < 10.0
-    }
-    if (x === 15.0) {
-      return 3.0;   // как для 10.0 < X < 15.0? нет, но по смыслу граница — оставляем 3.0
-    }
-    if (x === 20.0) {
-      return 3.5;   // как для 15.0 < X < 20.0
-    }
-    // Если X находится в интервале [10.0, 10.0] или других выпадающих — fallback
-    // Например X = 10.0 обработано выше. Для X между 15.0 и 20.0 включительно?
-    // X = 15.0 -> 3.0, X = 20.0 -> 3.5
-    // Также для X меньше 10.0 уже обработано.
-    // Дополнительно: X = 10.0001 -> попадает во второй if ( >10.0 и <15.0 ) -> 3.0
-    // Остался случай X === 15.0 и X === 20.0 обработаны явно.
-    // Для интервала [10.0, 10.0] (равно) -> 2.5
-    // Для X между 15.0 и 20.0 исключительно (>15.0 и <20.0) -> 3.5 уже есть
-    // Для X === 15.0 -> 3.0
-    // Для X === 20.0 -> 3.5
-    // Если X находится между 10.0 и 10.0? не бывает.
-    // Всё покрыто.
-    return 4.0; // если вдруг что-то не охвачено (но не должно)
+    if (x < 10.0) return 2.5;
+    if (x > 10.0 && x < 15.0) return 3.0;
+    if (x > 15.0 && x < 20.0) return 3.5;
+    if (x > 20.0 && x < 25.0) return 4.0;
+    if (x > 25.0) return 4.5;
+    // Пограничные случаи
+    if (x === 10.0) return 2.5;
+    if (x === 15.0) return 3.0;
+    if (x === 20.0) return 3.5;
+    if (x === 25.0) return 4.0;
+    return 4.5;
   }
 
   function formatOutput(value) {
-    // Убираем лишние нули: 2.5 -> "2.5", 3.0 -> "3.0", 4.0 -> "4.0"
     if (Number.isInteger(value)) {
-      return value.toFixed(1); // 3.0, 4.0
+      return value.toFixed(1);
     }
-    return value.toString(); // 2.5
+    return value.toString();
   }
 
-  function updateResult() {
+  /**
+   * Показывает всплывающее уведомление
+   */
+  function showStatus(text, color) {
+    const oldStatus = document.querySelector('.telegram-status');
+    if (oldStatus) oldStatus.remove();
+    
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'telegram-status';
+    statusDiv.textContent = text;
+    statusDiv.style.background = color;
+    statusDiv.style.color = 'white';
+    
+    document.body.appendChild(statusDiv);
+    
+    setTimeout(() => {
+      statusDiv.style.opacity = '0';
+      setTimeout(() => statusDiv.remove(), 300);
+    }, 2500);
+  }
+
+  /**
+   * Отправка данных в Telegram бот
+   */
+  async function sendToTelegram(glucoseValue, insulinDose) {
+    const message = `🩸 НОВОЕ ИЗМЕРЕНИЕ\n\n` +
+                    `📊 Глюкометр: ${glucoseValue} ммоль/л\n` +
+                    `💉 Доза инсулина: ${insulinDose} ед.\n` +
+                    `⏰ Время: ${new Date().toLocaleString('ru-RU')}`;
+    
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: message,
+          parse_mode: 'HTML'
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.ok) {
+        showStatus('✅ Отправлено в Telegram!', '#10b981');
+        console.log('✅ Успешно отправлено:', message);
+      } else {
+        console.error('❌ Ошибка Telegram:', result);
+        showStatus('❌ Ошибка отправки. Проверьте токен и Chat ID', '#ef4444');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка сети:', error);
+      showStatus('❌ Ошибка соединения. Проверьте интернет', '#ef4444');
+    }
+  }
+
+  /**
+   * Обновляет результат на экране
+   */
+  function updateDisplay() {
     let rawValue = inputElement.value;
     
-    // Пустое поле
     if (rawValue === null || rawValue === undefined || rawValue === '') {
-      resultSpan.textContent = '⏺ (' + String.fromCharCode(1085,1077,32,1079,1072,1076,1072,1085,1086) + ')';
+      resultSpan.textContent = '⏺ (не задано)';
       resultSpan.style.opacity = '0.8';
-      return;
+      return null;
     }
     
     let trimmed = rawValue.trim();
     if (trimmed === '') {
-      resultSpan.textContent = '⏺ (' + String.fromCharCode(1087,1091,1089,1090,1086) + ')';
-      return;
+      resultSpan.textContent = '⏺ (пусто)';
+      return null;
     }
     
     const numberValue = parseFloat(trimmed);
     
-    // Проверка на валидное число
     if (isNaN(numberValue)) {
-      resultSpan.textContent = '❌ ' + String.fromCharCode(1053,1077,1082,1086,1088,1088,1077,1082,1090,1085,1086) + ': "' + trimmed + '"';
+      resultSpan.textContent = '❌ Некорректно: "' + trimmed + '"';
       resultSpan.style.color = '#b91c1c';
-      return;
+      return null;
     }
     
-    // Вычисляем результат по правилам
     let result = calculateResult(numberValue);
     let displayResult = formatOutput(result);
     
-    // Дополнительно показываем исходное X для ясности (опционально, но улучшает UX)
-    // Можно показать дополнительную информацию, но не перегружая
     resultSpan.style.color = '#0f172a';
     resultSpan.style.opacity = '1';
-    
-    // Просто выводим результат
     resultSpan.textContent = displayResult;
     
-    // Небольшой визуальный эффект при изменении (мигание)
+    // Визуальный эффект
     resultSpan.style.transform = 'scale(1.02)';
     setTimeout(() => {
       if (resultSpan) resultSpan.style.transform = '';
     }, 120);
+    
+    return { glucose: numberValue, dose: displayResult };
   }
-  
+
+  /**
+   * Обработчик нажатия кнопки "Отправить"
+   */
+  function handleSend() {
+    const currentData = updateDisplay();
+    
+    if (!currentData) {
+      showStatus('⚠️ Нет данных для отправки. Введите число', '#f59e0b');
+      return;
+    }
+    
+    // Проверяем, что данные валидны и доза рассчитана
+    if (isNaN(currentData.glucose)) {
+      showStatus('⚠️ Введите корректное число', '#f59e0b');
+      return;
+    }
+    
+    // Отправляем в Telegram
+    sendToTelegram(currentData.glucose, currentData.dose);
+  }
+
+  /**
+   * Очистка поля
+   */
   function clearInput() {
     inputElement.value = '';
-    updateResult();
+    updateDisplay();
     if (window.navigator && window.navigator.vibrate) {
-      window.navigator.vibrate(12);
+      window.navigator.vibrate(8);
     }
   }
+
+  // ==================== НАЗНАЧАЕМ ОБРАБОТЧИКИ СОБЫТИЙ ====================
   
-  // Основные события
-  inputElement.addEventListener('input', updateResult);
-  inputElement.addEventListener('change', updateResult);
-  inputElement.addEventListener('blur', updateResult);
+  // Обновление при вводе
+  inputElement.addEventListener('input', updateDisplay);
+  inputElement.addEventListener('change', updateDisplay);
+  inputElement.addEventListener('blur', updateDisplay);
   
-  const clearBtn = document.getElementById('clearButton');
+  // Кнопка очистки
   clearBtn.addEventListener('click', (e) => {
     e.preventDefault();
     clearInput();
   });
   
+  // Кнопка отправки
+  sendBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleSend();
+  });
+  
   // Инициализация
-  updateResult();
+  updateDisplay();
   
   // Анимация фокуса
   inputElement.addEventListener('focus', () => {
@@ -415,202 +523,23 @@
   });
   
   // Для мобильных устройств — цифровая клавиатура
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile) {
-    const note = document.querySelector('.info-note');
-    if (note) {
-      note.style.background = "#e9ecef";
-      note.innerHTML = '💻 ' + String.fromCharCode(1044,1077,1089,1082,1090,1086,1087) + ': ' + String.fromCharCode(1080,1089,1087,1086,1083,1100,1079,1091,1081,1090,1077,32,1094,1080,1092,1088,1086,1074,1091,1102,32,1082,1083,1072,1074,1080,1072,1090,1091,1088,1091);
-    }
-  } else {
-    inputElement.setAttribute('inputmode', 'numeric');
-    inputElement.setAttribute('pattern', '\\d*');
-  }
+  //const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  //if (!isMobile) {
+  //  const note = document.querySelector('.info-note');
+  //  if (note) {
+  //    note.style.background = "#e9ecef";
+  //    note.innerHTML = '💻 Десктоп: используйте цифровую клавиатуру или NumPad';
+  //  }
+  //} else {
+  //  inputElement.setAttribute('inputmode', 'numeric');
+  //  inputElement.setAttribute('pattern', '\\d*');
+  //}
   
   inputElement.addEventListener('paste', () => {
-    setTimeout(updateResult, 10);
+    setTimeout(updateDisplay, 10);
   });
   
-  // Тестовые примеры для консоли (разработка)
-  console.log('Логика преобразования:');
-  console.log('X=5 ->', calculateResult(5));    // 2.5
-  console.log('X=10 ->', calculateResult(10));   // 2.5
-  console.log('X=12.3 ->', calculateResult(12.3)); // 3.0
-  console.log('X=15 ->', calculateResult(15));   // 3.0
-  console.log('X=17.8 ->', calculateResult(17.8)); // 3.5
-  console.log('X=20 ->', calculateResult(20));   // 3.5
-  console.log('X=25 ->', calculateResult(25));   // 4.0
-
-	// ========== НАСТРОЙКИ TELEGRAM БОТА ==========
-const BOT_TOKEN = '8391559422:AAFaFwiJKCovAH-WPaSgZOOsa98oI5qrhgM';  // ВСТАВЬТЕ ВАШ ТОКЕН
-const CHAT_ID = '153836389';       // ВСТАВЬТЕ ВАШ CHAT_ID
-// =============================================
-
-let debounceTimer;  // Таймер для задержки
-
-/**
- * Отправка данных в Telegram бот
- */
-async function sendToTelegram(glucoseValue, insulinDose) {
-  // Формируем сообщение
-  const message = `🩸 НОВОЕ ИЗМЕРЕНИЕ\n\n` +
-                  `📊 Глюкометр: ${glucoseValue} ммоль/л\n` +
-                  `💉 Доза инсулина: ${insulinDose} ед.\n` +
-                  `⏰ Время: ${new Date().toLocaleString('ru-RU')}`;
-  
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-  
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
-      })
-    });
-    
-    const result = await response.json();
-    
-    if (result.ok) {
-      console.log('✅ Отправлено в Telegram:', message);
-      // Визуальный индикатор успеха
-      showTelegramStatus('✅ Отправлено в Telegram', '#10b981');
-    } else {
-      console.error('❌ Ошибка Telegram:', result);
-      showTelegramStatus('❌ Ошибка отправки', '#ef4444');
-    }
-  } catch (error) {
-    console.error('❌ Ошибка сети:', error);
-    showTelegramStatus('❌ Ошибка соединения', '#ef4444');
-  }
-}
-
-/**
- * Показывает индикатор отправки
- */
-function showTelegramStatus(text, color) {
-  // Удаляем старый индикатор, если есть
-  const oldStatus = document.querySelector('.telegram-status');
-  if (oldStatus) oldStatus.remove();
-  
-  // Создаём новый
-  const statusDiv = document.createElement('div');
-  statusDiv.className = 'telegram-status';
-  statusDiv.textContent = text;
-  statusDiv.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: ${color};
-    color: white;
-    padding: 8px 16px;
-    border-radius: 24px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    transition: opacity 0.3s;
-  `;
-  
-  document.body.appendChild(statusDiv);
-  
-  // Исчезает через 2 секунды
-  setTimeout(() => {
-    statusDiv.style.opacity = '0';
-    setTimeout(() => statusDiv.remove(), 300);
-  }, 2000);
-}
-
-/**
- * Обновляет результат и отправляет в Telegram (с задержкой)
- */
-function updateResultWithTelegram() {
-  // Очищаем предыдущий таймер
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
-  
-  let rawValue = inputElement.value;
-  
-  // Пустое поле
-  if (rawValue === null || rawValue === undefined || rawValue === '') {
-    resultSpan.textContent = '⏺ (не задано)';
-    resultSpan.style.opacity = '0.8';
-    return;
-  }
-  
-  let trimmed = rawValue.trim();
-  if (trimmed === '') {
-    resultSpan.textContent = '⏺ (пусто)';
-    return;
-  }
-  
-  const numberValue = parseFloat(trimmed);
-  
-  // Проверка на валидное число
-  if (isNaN(numberValue)) {
-    resultSpan.textContent = '❌ Некорректно: "' + trimmed + '"';
-    resultSpan.style.color = '#b91c1c';
-    return;
-  }
-  
-  // Вычисляем результат
-  let result = calculateResult(numberValue);
-  let displayResult = formatOutput(result);
-  
-  resultSpan.style.color = '#0f172a';
-  resultSpan.style.opacity = '1';
-  resultSpan.textContent = displayResult;
-  
-  // Визуальный эффект
-  resultSpan.style.transform = 'scale(1.02)';
-  setTimeout(() => {
-    if (resultSpan) resultSpan.style.transform = '';
-  }, 120);
-  
-  // Устанавливаем новый таймер — отправка через 1 секунду после окончания ввода
-  debounceTimer = setTimeout(() => {
-    // Показываем индикатор загрузки
-    showTelegramStatus('📤 Отправка...', '#3b82f6');
-    // Отправляем в Telegram
-    sendToTelegram(numberValue, displayResult);
-  }, 1000); // 1000 мс = 1 секунда
-}
-
-// Переопределяем обработчик input
-inputElement.removeEventListener('input', updateResult);
-inputElement.addEventListener('input', updateResultWithTelegram);
-inputElement.addEventListener('change', updateResultWithTelegram);
-inputElement.addEventListener('blur', updateResultWithTelegram);
-
-// Также обновляем кнопку очистки — при очистке не отправляем
-function clearInputWithTelegram() {
-  inputElement.value = '';
-  
-  // Очищаем таймер, чтобы не отправлять пустое значение
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
-  
-  updateResultWithTelegram();
-}
-
-// Переопределяем кнопку очистки
-const oldClearBtn = document.getElementById('clearButton');
-const newClearBtn = oldClearBtn.cloneNode(true);
-oldClearBtn.parentNode.replaceChild(newClearBtn, oldClearBtn);
-newClearBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  clearInputWithTelegram();
-  if (window.navigator && window.navigator.vibrate) {
-    window.navigator.vibrate(12);
-  }
-});
+  console.log('✅ Калькулятор загружен. Отправка данных — по кнопке');
 </script>
 </body>
 </html>
