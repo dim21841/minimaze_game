@@ -566,34 +566,24 @@
     };
 
     // ----- ПЕРЕВОД -----
-    async function translateText(text, targetLang = 'ro') {
-    	if (!text?.trim()) return text;
+async function translateText(text, from = 'ru', to = 'ro') {
+    if (!text?.trim()) return text;
     
-    	const apiKey = 'AQVNz8lDDYy4mDBowCo60xLqawh_dLvU27belobo';           // ← сюда скопированный ключ
-    	const folderId = 'ajeefkmcb6t8cnsin78b'; // ← ваш Folder ID
+    try {
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`, {
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        const data = await response.json();
+        if (data && data.responseData && data.responseData.translatedText) {
+            return data.responseData.translatedText;
+        }
+    } catch(e) { console.log('MyMemory error:', e); }
     
-    	try {
-        	const response = await fetch('https://translate.api.cloud.yandex.net/translate/v2/translate', {
-            	method: 'POST',
-            	headers: {
-                	'Authorization': `Api-Key ${apiKey}`,
-                	'Content-Type': 'application/json'
-            	},
-            	body: JSON.stringify({
-                	sourceLanguageCode: 'ru',
-                	targetLanguageCode: targetLang,
-                	texts: [text],
-                	folderId: folderId
-            	})
-        	});
-        
-        	const data = await response.json();
-        	return data.translations[0].text;
-    		} catch (error) {
-        	console.error('Ошибка перевода:', error);
-        	return text;
-    	}
-	}
+    return null;
+}
 
     async function translateAll() {
         showStatus("🔄 Выполняется перевод...");
