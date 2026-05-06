@@ -342,14 +342,16 @@
     if (x < 10.0) return 2.5;
     if (x > 10.0 && x < 15.0) return 3.0;
     if (x > 15.0 && x < 20.0) return 3.5;
-    if (x > 20.0 && x < 25.0) return 4.0;
-    if (x > 25.0) return 4.5;
+    if (x > 20.0 && x < 25.0) return 4.0;    
+    if (x > 25.0 && x < 30.0) return 4.5;
+    if (x > 30.0) return 5.0;
     // Пограничные случаи
     if (x === 10.0) return 2.5;
     if (x === 15.0) return 3.0;
     if (x === 20.0) return 3.5;
     if (x === 25.0) return 4.0;
-    return 4.5;
+    if (x === 30.0) return 4.5;
+    return 5.0;
   }
 
   function formatOutput(value) {
